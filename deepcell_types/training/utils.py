@@ -190,20 +190,41 @@ class PredLogger:
         self.cell_index = []
         self.dataset_name = []
         self.fov_name = []
+        # Optional per-cell (tissue, modality) labels. Populated only when the
+        # caller passes them to log(); used by the paper's (tissue, modality)
+        # abstention bucketing (see deepcell_types.abstention).
+        self.tissue = []
+        self.modality = []
 
-    def log(self, labels, probs, cell_index, dataset_name, fov_name):
+    def log(
+        self,
+        labels,
+        probs,
+        cell_index,
+        dataset_name,
+        fov_name,
+        tissue=None,
+        modality=None,
+    ):
         self.labels.append(labels)
         self.probs.append(probs)
         self.cell_index.append(cell_index)
         self.dataset_name.append(dataset_name)
         self.fov_name.append(fov_name)
+        if tissue is not None:
+            self.tissue.append(tissue)
+        if modality is not None:
+            self.modality.append(modality)
 
     def to_dataframe(self):
         """Assemble the accumulated predictions into a DataFrame.
 
         Columns: one per cell-type class (softmax probability, ordered by
         ``ct2idx`` value), then ``cell_type_actual``, ``cell_index``,
-        ``dataset_name``, ``fov_name``.
+        ``dataset_name``, ``fov_name``. When per-cell ``tissue`` / ``modality``
+        labels were supplied to :meth:`log`, ``tissue`` and ``modality`` columns
+        are also emitted (required for the paper's (tissue, modality)
+        abstention bucketing).
         """
         columns = sorted(self.ct2idx, key=self.ct2idx.get)
         idx2ct = {v: k for k, v in self.ct2idx.items()}
@@ -217,6 +238,10 @@ class PredLogger:
         df["cell_index"] = cell_index
         df["dataset_name"] = dataset_name
         df["fov_name"] = fov_name
+        if self.tissue:
+            df["tissue"] = np.concatenate(self.tissue)
+        if self.modality:
+            df["modality"] = np.concatenate(self.modality)
         return df
 
     @staticmethod

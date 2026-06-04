@@ -102,15 +102,13 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", ""))
     type=float,
     default=0.2,
     help=(
-        "Per-FOV IQR-fence abstention on max-softmax confidence. "
-        "Default k=0.2 — the published headline setting, chosen to maximise "
-        "macro_F1 separation against the strongest baseline (XGBoost-tuned) "
-        "while keeping a sizeable cohort of confident cells. "
+        "Per-(tissue, modality) IQR-fence abstention on max-softmax confidence. "
+        "Default k=0.2 is the published headline operating point. "
         "Cells whose max-softmax falls below Q1 - k*IQR within their "
-        "(dataset_name, fov_name) group are flagged as abstained "
+        "(tissue, modality) bucket are flagged as abstained "
         "(predicted_ct = 'Unknown', original kept in predicted_ct_raw). "
         "Set k <= 0 or pass 'none' to disable. k=1.5 is the canonical Tukey "
-        "fence (~no-op). See docs/reports/ct_iqr_abstention_test.md."
+        "fence (~no-op)."
     ),
 )
 def main(
@@ -337,6 +335,11 @@ def main(
 
     predlogger = PredLogger(dct_config.ct2idx)
 
+    # Reverse lookups so per-cell predictions carry their (tissue, modality)
+    # names — the buckets the paper's abstention fence is computed within.
+    idx2tissue = {v: k for k, v in dct_config.tissue2idx.items()}
+    idx2domain = {v: k for k, v in dct_config.domain2idx.items()}
+
     all_attn_mp = []
 
     with torch.no_grad():
@@ -377,12 +380,26 @@ def main(
                 all_attn_mp.append(attn_mp.cpu().numpy())
 
             # Log predictions (PredLogger stores original ct2idx labels for CSV)
+            tissue_idx = batch_data.tissue_idx
+            domain_idx = batch_data.domain_idx
             predlogger.log(
                 labels=batch_data.ct_idx.detach().cpu().numpy(),
                 probs=probs.cpu().detach().numpy(),
                 cell_index=batch_data.cell_index.detach().cpu().numpy(),
                 dataset_name=batch_data.dataset_name,
                 fov_name=batch_data.fov_name,
+                tissue=(
+                    None
+                    if tissue_idx is None
+                    else [
+                        idx2tissue.get(int(i), "__unknown__")
+                        for i in tissue_idx.cpu().numpy()
+                    ]
+                ),
+                modality=[
+                    idx2domain.get(int(i), "__unknown__")
+                    for i in domain_idx.cpu().numpy()
+                ],
             )
 
             # Update metrics (use compact labels)
@@ -436,11 +453,11 @@ def main(
 
     # Assemble predictions in memory so abstention is baked into a single write
     # (no write-raw -> read-back -> overwrite). When abstention is enabled the
-    # IQR fence is computed per (dataset_name, fov_name) group, matching the
-    # Python API's per-FOV semantics (deepcell_types.predict).
+    # IQR fence is computed per (tissue, modality) bucket, matching the paper's
+    # Methods ("Inference-time abstention").
     df = predlogger.to_dataframe()
 
-    # ---------------- CT abstention (immediate, per-FOV) ----------------
+    # ---------------- CT abstention (immediate, per (tissue, modality)) ------
     # On by default with k=0.2 (published headline operating point); set
     # --ct_abstention_k 0 or a negative value to disable. When disabled, the
     # frame is written as-is (probability + metadata columns only, no
@@ -462,13 +479,14 @@ def main(
             true_labels, pred_labels_pre, class_cols, CELL_TYPE_HIERARCHY
         )
 
-        # Apply abstention per (dataset_name, fov_name). Sentinel "Unknown"
-        # matches the Python API contract (predict.ABSTENTION_LABEL). Adds
-        # `abstained` and `predicted_ct_raw`; sentinels predicted_ct in place.
+        # Apply abstention per (tissue, modality) bucket, matching the paper's
+        # Methods. Sentinel "Unknown" matches the Python API contract
+        # (predict.ABSTENTION_LABEL). Adds `abstained` and `predicted_ct_raw`;
+        # sentinels predicted_ct in place.
         df = apply_abstention(
             df,
             k=float(ct_abstention_k),
-            group_cols=("dataset_name", "fov_name"),
+            group_cols=("tissue", "modality"),
             max_softmax_col="_max_softmax",
             pred_col="predicted_ct",
             sentinel="Unknown",
