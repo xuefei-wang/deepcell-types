@@ -1,9 +1,17 @@
-"""Three-part equivalence proof for the relocated maps/cellsighter baselines.
+"""Byte-identity snapshots for the maps/cellsighter baselines.
 
-model.py moved byte-identical (sha256). run.py/__init__.py changed ONLY by the
-relocation import rewrite `from {pkg}.model import` -> `from .model import`; this
-test inverts that single rewrite and asserts the result is byte-identical to the
-recorded upstream original, proving no logic changed.
+maps: model.py moved byte-identical (sha256); run.py/__init__.py changed ONLY by
+the relocation import rewrite `from {pkg}.model import` -> `from .model import`;
+this test inverts that single rewrite and asserts byte-identity to the recorded
+upstream original, proving no logic changed.
+
+cellsighter: NO LONGER an upstream-identical port. On feat/faithful-cellsighter
+its model.py and run.py were intentionally reimplemented to follow the paper's
+training recipe (unmasked neighbor intensities, 60x60 crops, ImageNet ResNet50
+stem, geometric augmentation, per-member seeding). Its SHAs below are therefore
+re-pinned as a DRIFT GUARD on the faithful baseline (any future edit must be a
+deliberate re-pin), not as a proof of upstream equivalence. __init__.py is still
+only an import rewrite, so that check is unchanged.
 """
 
 import hashlib
@@ -15,7 +23,8 @@ PKG = Path(__file__).resolve().parents[2] / "deepcell_types" / "baselines"
 
 MODEL_ORIG_SHA = {
     "maps": "29202958b4326a542732663eb92541681d1d3a10ebc0767bad547416249edc00",
-    "cellsighter": "fccb04d5d1eb87159d6afcac473b5b872d5c5aafa54a8c56a65457adbeb2f7f2",
+    # cellsighter: faithful-reimplementation drift guard (ImageNet stem, see docstring).
+    "cellsighter": "83629b114b193cc945f23e49e22743ab53d0788a0045d98659bc2f97603d3f5f",
 }
 # Re-pinned after removing the locally-added ``--min_channels`` CLI option
 # (an unused channel-count filter that caused unfair baseline comparisons via
@@ -27,7 +36,9 @@ MODEL_ORIG_SHA = {
 # logic changed. The import rewrite remains the only structural delta vs. these.
 RUN_ORIG_SHA = {
     "maps": "78888f8088b9ed3574a3e48cfb86e2317da224e1bb12c507a4e727cc32ece05e",
-    "cellsighter": "0c8a38ebaeb1ec5e6b5839ab31065ce0a7d5e66af2374a1bcabad0cb6b359a13",
+    # cellsighter: faithful-reimplementation drift guard, not upstream equivalence.
+    # This is the sha of run.py with the relocation import rewrite inverted.
+    "cellsighter": "684a23ae6b36b3ff8e8a5f184d3a2d114eef839ca8ad1371a2a68b3315a7d8f6",
 }
 INIT_ORIG_SHA = {
     "maps": "5a0a765d62d2f11c841da99f34ccd63b226b47285fe85b6a9edbf92636a58f75",
