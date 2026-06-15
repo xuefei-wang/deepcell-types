@@ -82,7 +82,7 @@ published CellSighter was trained, and are recorded here for that reason.
   dilation (`p=0.5`), neighbor-mask dilation (`p=0.5`), 0–360° rotation (always),
   per-channel pixel shift (`p=0.5`), and h/v flips at `p=0.75`. Poisson, dilation,
   rotation, and shift are absent here, and our flips use `p=0.5` vs upstream `0.75`.
-- **Smaller spatial context.** We use 32×32 patches (`config.py:78-79`); upstream
+- **Smaller spatial context.** We use 32×32 patches (`training/config.py:78-79`); upstream
   extracts 128 px and feeds a 60 px model input, i.e. a larger neighborhood.
 - **Class-balancing sampler differs.** We use the DeepCell Types
   sqrt-inverse-frequency `FOVGroupedSampler` with a 1000-sample effective-count
