@@ -44,3 +44,15 @@ python -m deepcell_types.baselines cellsighter ...
 - **Best epoch selected on validation macro-accuracy** (`run.py:399`,
   `run.py:460-461`); validation runs every `val_every_n_epochs` (default 10) plus
   the final epoch, matching the upstream cadence.
+- **Class balancing — faithful equal-proportion (default).** `--class_balance
+  equal` (default) reproduces the upstream training recipe: the train pool is
+  first capped to `--size_data` cells/class (default 1000, matching the paper's
+  `size_data` / `subsample_const_size`), then a `WeightedRandomSampler` draws
+  with full-inverse-frequency weights `weight = total / count`
+  (`samplers.py:compute_sample_weights_equal`, matching upstream `define_sampler`
+  with `sample_batch: true`). Two ablation schemes are selectable: `--class_balance
+  sqrt` (the DCT-wide sqrt-inverse-frequency sampler with a 1000-count floor) and
+  `--class_balance none` (uniform; also reachable via the deprecated
+  `--no_weighted_sampler`). Remaining deviation: upstream's `hierarchy_match`
+  balances at the lineage level, whereas balancing here is computed on the
+  fine-grained standardized cell-type label.
