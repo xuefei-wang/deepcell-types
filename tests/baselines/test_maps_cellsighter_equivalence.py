@@ -38,7 +38,7 @@ RUN_ORIG_SHA = {
     "maps": "78888f8088b9ed3574a3e48cfb86e2317da224e1bb12c507a4e727cc32ece05e",
     # cellsighter: faithful-reimplementation drift guard, not upstream equivalence.
     # This is the sha of run.py with the relocation import rewrite inverted.
-    "cellsighter": "684a23ae6b36b3ff8e8a5f184d3a2d114eef839ca8ad1371a2a68b3315a7d8f6",
+    "cellsighter": "94d5fbf6fa810234b23da2742922df42606ec0141622259c129535d843af2ea4",
 }
 INIT_ORIG_SHA = {
     "maps": "5a0a765d62d2f11c841da99f34ccd63b226b47285fe85b6a9edbf92636a58f75",
