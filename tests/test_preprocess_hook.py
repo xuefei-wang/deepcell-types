@@ -83,13 +83,14 @@ def test_default_config_hook_equals_builtin_in_patch_generator():
         np.testing.assert_allclose(b, h, rtol=1e-5, atol=1e-6)
 
 
-def test_preprocess_hook_nonfinite_output_rejected():
+@pytest.mark.parametrize("bad_value", [np.nan, np.inf])
+def test_preprocess_hook_nonfinite_output_rejected(bad_value):
     raw, mask = _toy()
     cfg = DCTConfig()
 
     def hook(arr, names):
         out = np.zeros_like(arr)
-        out[0, 0, 0] = np.nan
+        out[0, 0, 0] = bad_value
         return out
 
     with pytest.raises(ValueError, match="non-finite"):
@@ -105,12 +106,13 @@ def test_preprocess_hook_nonfinite_output_rejected():
         )
 
 
-def test_preprocess_hook_out_of_range_output_rejected():
+@pytest.mark.parametrize("bad_value", [-0.01, 5.0])
+def test_preprocess_hook_out_of_range_output_rejected(bad_value):
     raw, mask = _toy()
     cfg = DCTConfig()
 
     def hook(arr, names):
-        return np.full_like(arr, 5.0)  # outside the required [0, 1] contract
+        return np.full_like(arr, bad_value)  # outside the required [0, 1] contract
 
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         list(
@@ -123,3 +125,36 @@ def test_preprocess_hook_out_of_range_output_rejected():
                 channel_names=["CD3", "DAPI"],
             )
         )
+
+
+@pytest.mark.parametrize("kind", ["upper_boundary", "integer", "readonly"])
+def test_preprocess_hook_accepts_valid_value_contract_edges(kind):
+    raw, mask = _toy()
+    cfg = DCTConfig()
+
+    def hook(arr, names):
+        if kind == "upper_boundary":
+            return np.ones_like(arr)
+        if kind == "integer":
+            out = np.zeros(arr.shape, dtype=np.uint8)
+            out[0] = 1
+            return out
+        out = np.zeros_like(arr)
+        out.flags.writeable = False
+        return out
+
+    patches = list(
+        patch_generator(
+            raw,
+            mask,
+            0.5,
+            dct_config=cfg,
+            preprocess=hook,
+            channel_names=["CD3", "DAPI"],
+        )
+    )
+    assert patches
+    for raw_patch, *_ in patches:
+        assert raw_patch.dtype == np.float32
+        assert raw_patch.min() >= 0.0
+        assert raw_patch.max() <= 1.0

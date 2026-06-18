@@ -60,11 +60,14 @@ the [tutorial](https://vanvalenlab.github.io/deepcell-types/site/tutorial.html).
 
 ## TissueNet zarr archive (optional)
 
-The archive is **only** needed if you want to override the packaged
-registry — e.g. to run against a custom marker panel — or for training (see
-[Training](#training)). When present, `predict` reads the registry from it
-instead of `vocab.json`; pass `zarr_path=...` directly or set the
-`DEEPCELL_TYPES_ZARR_PATH` environment variable.
+The archive is **only** needed for training (see [Training](#training)) or
+when your checkpoint was trained with a registry different from the packaged
+`vocab.json`. It cannot make an existing checkpoint accept new markers; the
+checkpoint and registry marker order must match. Subsets or reordered supported
+channels work archive-free through `channel_names`. When present, `predict`
+reads the registry from the archive instead of `vocab.json`; pass
+`zarr_path=...` directly or set the `DEEPCELL_TYPES_ZARR_PATH` environment
+variable.
 
 A registered user can download a public TissueNet zarr archive from
 `https://users.deepcell.org`; see `docs/site/API-key.md` for the access
