@@ -9,11 +9,18 @@ circular ImportError. Each import is checked in its own subprocess because
 
 import subprocess
 import sys
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _import_ok(statement):
     result = subprocess.run(
-        [sys.executable, "-c", statement], capture_output=True, text=True
+        [sys.executable, "-c", statement],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
     )
     assert result.returncode == 0, result.stderr
 
@@ -35,4 +42,11 @@ def test_dataset_importable_first():
 def test_dataloader_reexported_from_dataset():
     _import_ok(
         "from deepcell_types.training.dataset import create_dataloader, DataLoaderConfig"
+    )
+
+
+def test_dataloader_reexported_from_training_package():
+    _import_ok(
+        "from deepcell_types.training import create_dataloader; "
+        "assert create_dataloader"
     )
