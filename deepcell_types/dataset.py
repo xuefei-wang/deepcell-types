@@ -21,11 +21,13 @@ class PatchDataset(IterableDataset):
         mpp,
         dct_config,
         preprocess=None,
+        release_source_after_iter=False,
         **kwargs,
     ):
         super(PatchDataset, self).__init__(**kwargs)
 
         self.preprocess = preprocess
+        self.release_source_after_iter = bool(release_source_after_iter)
 
         if raw.ndim != 3:
             raise ValueError("raw must have shape (C, H, W).")
@@ -147,18 +149,17 @@ class PatchDataset(IterableDataset):
         worker_info = get_worker_info()
         if self.raw is None:
             raise RuntimeError(
-                "PatchDataset is single-pass: its source array is released "
-                "after the first iteration to free memory. Construct a new "
-                "PatchDataset to iterate again."
+                "PatchDataset source array was released after a single-pass "
+                "iteration. Construct a new PatchDataset to iterate again."
             )
-        # Release the dataset's reference to the full-resolution source array
-        # before iterating, so it can be freed as soon as patch_generator
-        # rescales it (the rescaled copy is roughly half the size at these MPPs).
-        # This is the single biggest sustained-RAM reduction on multi-GB FOVs.
-        # Safe because the dataset is single-pass: DataLoader iterates it once,
-        # and multiprocessing workers each receive their own unpickled copy.
         raw = self.raw
-        self.raw = None
+        if self.release_source_after_iter and worker_info is None:
+            # Single-process inference can transfer the parent dataset's
+            # reference to patch_generator, so the full-resolution source can
+            # be freed once patch_generator owns its rescaled copy. With worker
+            # processes, __iter__ runs on worker copies and clearing here would
+            # not release the parent process' array.
+            self.raw = None
         gen = patch_generator(
             raw,
             self.mask,
@@ -167,7 +168,8 @@ class PatchDataset(IterableDataset):
             preprocess=self.preprocess,
             channel_names=self.channel_names_standard,
         )
-        del raw  # only the generator's frame now pins the full-res source
+        if self.release_source_after_iter and worker_info is None:
+            del raw  # only the generator's frame now pins the full-res source
         for patch_idx, (raw_patch, mask_patch, cell_index, _) in enumerate(gen):
             if (
                 worker_info is not None

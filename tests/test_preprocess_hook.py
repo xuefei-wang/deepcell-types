@@ -83,12 +83,27 @@ def test_default_config_hook_equals_builtin_in_patch_generator():
         np.testing.assert_allclose(b, h, rtol=1e-5, atol=1e-6)
 
 
-def test_patchdataset_is_single_pass():
-    # The dataset frees its source array after the first iteration to cut peak
-    # RAM; re-iterating must fail loudly, not crash on a None source array.
+def test_patchdataset_is_repeatable_by_default():
     raw, mask = _toy()
     cfg = DCTConfig()
     ds = dsmod.PatchDataset(raw, mask, ["CD3", "DAPI"], 0.5, cfg)
-    list(ds)  # first pass exhausts and releases self.raw
+    first = list(ds)
+    second = list(ds)
+    assert len(first) == len(second) > 0
+
+
+def test_patchdataset_can_release_source_for_single_pass():
+    raw, mask = _toy()
+    cfg = DCTConfig()
+    ds = dsmod.PatchDataset(
+        raw,
+        mask,
+        ["CD3", "DAPI"],
+        0.5,
+        cfg,
+        release_source_after_iter=True,
+    )
+    list(ds)
+    assert ds.raw is None
     with pytest.raises(RuntimeError, match="single-pass"):
         list(ds)

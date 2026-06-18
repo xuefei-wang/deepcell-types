@@ -241,20 +241,21 @@ def preprocess_fov(
 # ---------------------------------------------------------------------------
 
 
-def _normalize_per_channel(image):
+def _normalize_per_channel(image, *, in_place=False):
     min_vals = np.min(image, axis=(0, 1), keepdims=True)
     ptp_vals = np.ptp(image, axis=(0, 1), keepdims=True)
     ptp_vals[ptp_vals == 0] = 1.0
-    # In-place to avoid two extra full-array copies (`image - min` then `/ ptp`).
-    # `image` is freshly allocated by the percentile step above and owned solely
-    # here, so mutating it is safe. Elementwise result is bit-identical to
-    # (image - min_vals) / ptp_vals for the float32 input on this path.
-    image -= min_vals
-    image /= ptp_vals
-    return image
+    if in_place and image.flags.writeable and np.issubdtype(image.dtype, np.floating):
+        # In-place to avoid two extra full-array copies (`image - min` then
+        # `/ ptp`) on the inference path. Callers that use the helper directly
+        # get the historical copy-returning behavior by default.
+        image -= min_vals
+        image /= ptp_vals
+        return image
+    return (image - min_vals) / ptp_vals
 
 
-def _percentile_threshold_nonzero(image, percentile=99.9):
+def _percentile_threshold_nonzero(image, percentile=99.9, *, in_place=False):
     """Per-channel bright-spot clip using nonzero-pixel indexing.
 
     Mirrors deepcell-toolbox's reference recipe; differs from
@@ -264,19 +265,28 @@ def _percentile_threshold_nonzero(image, percentile=99.9):
     published checkpoint was trained against — see
     https://github.com/vanvalenlab/deepcell-toolbox/blob/e8c1277/deepcell_toolbox/processing.py#L104
     """
-    # Clip in place per channel instead of allocating a full zeros_like plus a
-    # per-channel copy. For an all-zero channel there is nothing above the
-    # threshold so it stays zero (matching the old zeros_like default); for a
-    # channel with signal, np.minimum(.., img_max) clips values above the
-    # nonzero-pixel percentile, identical to the old boolean-mask assignment
-    # (both store float32(img_max)). Net: one full-array allocation saved.
+    can_mutate = (
+        in_place and image.flags.writeable and np.issubdtype(image.dtype, np.floating)
+    )
+    processed_image = image if can_mutate else np.zeros_like(image)
     for chan in range(image.shape[-1]):
-        current_img = image[..., chan]
+        if can_mutate:
+            current_img = processed_image[..., chan]
+        else:
+            current_img = np.copy(image[..., chan])
         non_zero_vals = current_img[np.nonzero(current_img)]
         if len(non_zero_vals) > 0:
             img_max = np.percentile(non_zero_vals, percentile)
-            np.minimum(current_img, img_max, out=current_img)
-    return image
+            if can_mutate:
+                # Old boolean-mask assignment is a no-op when img_max is NaN;
+                # np.minimum(..., NaN) would poison the full channel.
+                if not np.isnan(img_max):
+                    np.minimum(current_img, img_max, out=current_img)
+            else:
+                threshold_mask = current_img > img_max
+                current_img[threshold_mask] = img_max
+                processed_image[..., chan] = current_img
+    return processed_image
 
 
 def _pad_cell(X, y, crop_size):
@@ -341,9 +351,9 @@ def patch_generator(raw, mask, mpp, dct_config, preprocess=None, channel_names=N
 
     if preprocess is None:
         raw = _percentile_threshold_nonzero(
-            raw, percentile=dct_config.PERCENTILE_THRESHOLD
+            raw, percentile=dct_config.PERCENTILE_THRESHOLD, in_place=True
         )
-        raw = _normalize_per_channel(raw)
+        raw = _normalize_per_channel(raw, in_place=True)
     else:
         # raw is (H, W, C) here; the hook contract is (C, H, W) in [0, 1].
         raw_chw = preprocess(np.transpose(raw, (2, 0, 1)), channel_names)

@@ -28,6 +28,39 @@ def test_default_config_matches_builtin_inference_path():
     np.testing.assert_allclose(out, ref, rtol=1e-5, atol=1e-6)
 
 
+def test_percentile_threshold_in_place_preserves_nan_percentile_behavior():
+    hwc = np.array([[[0.0], [1.0]], [[np.nan], [10.0]]], dtype=np.float32)
+
+    out = _percentile_threshold_nonzero(hwc.copy(), percentile=99.9, in_place=True)
+
+    np.testing.assert_equal(out, hwc)
+
+
+def test_preprocessing_helpers_keep_copy_semantics_for_integer_inputs():
+    hwc = np.array([[[0], [1]], [[3], [10]]], dtype=np.uint16)
+
+    clipped = _percentile_threshold_nonzero(hwc, percentile=50)
+    normalized = _normalize_per_channel(hwc)
+
+    assert clipped.dtype == np.uint16
+    assert normalized.dtype == np.float64
+    assert clipped is not hwc
+    assert normalized is not hwc
+
+
+def test_preprocessing_helpers_accept_read_only_inputs():
+    hwc = np.array([[[0.0], [1.0]], [[3.0], [10.0]]], dtype=np.float32)
+    hwc.setflags(write=False)
+
+    clipped = _percentile_threshold_nonzero(hwc, percentile=50, in_place=True)
+    normalized = _normalize_per_channel(hwc, in_place=True)
+
+    assert clipped.flags.writeable
+    assert normalized.flags.writeable
+    assert clipped is not hwc
+    assert normalized is not hwc
+
+
 def test_output_is_in_unit_range():
     raw, names = _fov()
     out = apply_config(raw, names, DEFAULT_CONFIG)

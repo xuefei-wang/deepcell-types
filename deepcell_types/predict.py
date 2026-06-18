@@ -358,12 +358,18 @@ def predict(
 
     pred_logger = _InferenceResultBuffer(dct_config)
     dataset = PatchDataset(
-        raw, mask, channel_names, mpp, dct_config, preprocess=preprocess
+        raw,
+        mask,
+        channel_names,
+        mpp,
+        dct_config,
+        preprocess=preprocess,
+        release_source_after_iter=(num_workers == 0),
     )
-    # The dataset now holds its own working copies (a float32 raw and a float32
-    # mask), so drop the caller-supplied references. When the caller passes the
-    # arrays inline (no other reference), this frees the full-resolution source
-    # for the duration of the inference loop instead of pinning it to the end.
+    # The dataset now holds its own working copies, so drop caller-supplied
+    # references. In the single-process loader, PatchDataset also transfers its
+    # source reference into patch_generator so the full-resolution source can be
+    # freed once patch_generator owns its rescaled copy.
     del raw, mask
     data_loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
