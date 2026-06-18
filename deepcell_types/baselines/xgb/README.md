@@ -26,16 +26,16 @@ python -m deepcell_types.baselines xgboost-tune ...   # Optuna hyperparameter se
 ## Deviations from a vanilla XGBoost fit (recorded for reproducibility)
 
 - **Absent markers are encoded as `NaN`, not `0.0`** (`missing_value=np.nan`,
-  `run.py:140`). This routes absent channels through XGBoost's built-in
+  `run.py:120`). This routes absent channels through XGBoost's built-in
   `missing=NaN` default-direction logic at every split, so a marker that is
   absent from a panel is not conflated with a real channel whose mean intensity
   happens to be `0.0`.
 - **Early stopping on a deterministic, FOV-grouped 10% inner split.** A
   `GroupShuffleSplit(n_splits=1, test_size=0.1, random_state=42)` grouped by
   training-FOV name carves an inner-validation set out of the *training* data
-  (`run.py:176-179`). The frozen test set is never used as the early-stopping
+  (`run.py:153-159`). The frozen test set is never used as the early-stopping
   `eval_set`, so test signal cannot leak into the boosting-round count.
-- **Early-stopping rounds** = `max(10, n_estimators // 10)` (`run.py:238`); with
+- **Early-stopping rounds** = `max(10, n_estimators // 10)` (`run.py:218`); with
   the default `n_estimators=100` this is 10 rounds.
 - **Contiguous label remap.** Labels are remapped to a contiguous `0..K-1`
   index over the classes actually present (`run.py:153-234`); test-only classes
@@ -57,9 +57,10 @@ python -m deepcell_types.baselines xgboost-tune ...   # Optuna hyperparameter se
 - **No `cellSize` feature.** XGBoost uses the per-marker mean intensities only;
   MAPS additionally appends `cellSize` (`maps/run.py`). XGBoost also uses **no**
   class weighting or balanced sampler, whereas MAPS uses a full-inverse-frequency
-  sampler and CellSighter a sqrt-inverse-frequency one. On rare-class macro
-  metrics these make the XGBoost number *conservative* relative to the neural
-  baselines, not advantaged.
+  sampler and current-master CellSighter uses a sqrt-inverse-frequency sampler.
+  These are meaningful input/training differences when interpreting rare-class
+  macro metrics; they are not advantages given to XGBoost relative to the neural
+  baselines.
 - **Tuning budget is not matched.** Only XGBoost has an automated hyperparameter
   search (`tuning.py`, ~100 Optuna trials); MAPS and CellSighter run at fixed
   configurations. When comparing the tuned XGBoost number head-to-head with the
