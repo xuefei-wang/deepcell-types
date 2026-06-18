@@ -61,10 +61,11 @@ def _background_subtract_per_channel(x, p, channels=None):
     out = x.copy()
     sel = range(x.shape[0]) if channels is None else channels
     for c in sel:
-        nz = out[c][np.nonzero(out[c])]
+        chan = out[c]
+        nz = chan[(chan != 0) & np.isfinite(chan)]
         if nz.size:
             floor = np.percentile(nz, p)
-            out[c] = np.clip(out[c] - floor, 0, None)
+            out[c] = np.where(np.isnan(chan), np.nan, np.clip(chan - floor, 0, None))
     return out
 
 
@@ -96,7 +97,9 @@ def apply_config(raw, channel_names, config):
             x = np.clip(x - float(step["value"]), 0, None)
         elif op == "background_subtract_per_channel":
             names = step.get("names")
-            sel = [idx[n] for n in names if n in idx] if names else None
+            sel = None
+            if names is not None:
+                sel = list(dict.fromkeys(idx[n] for n in names if n in idx))
             x = _background_subtract_per_channel(x, float(step.get("p", 25.0)), sel)
         elif op == "gamma":
             mx = x.max(axis=(1, 2), keepdims=True)

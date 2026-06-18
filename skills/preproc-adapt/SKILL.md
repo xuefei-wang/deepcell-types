@@ -85,7 +85,7 @@ Available ops (apply in listed order; always end with a normalize so the model s
 | `clip_percentile` | `p` | per-channel clip at the p-th percentile of nonzero pixels (tames bright outliers) |
 | `log1p` | — | `log1p(max(x,0))` |
 | `background_subtract` | `value` | `clip(x - value, 0, None)` — removes a pervasive background floor (one global value for all channels) |
-| `background_subtract_per_channel` | `p` (percentile, default 25), optional `names:[...]` | subtract each channel's own p-th-percentile nonzero floor — removes a high-background *pedestal* on one channel without touching clean channels; the principled fix for a saturated/high-background channel |
+| `background_subtract_per_channel` | `p` (percentile, default 25), optional `names:[...]` | subtract each selected channel's own p-th-percentile nonzero floor; omit `names` to apply to all channels, or pass names to target one suspected high-background pedestal |
 | `gamma` | `g` | per-channel gamma on `[0,max]` |
 | `denoise` | `kind` (median/gaussian), `size` | spatial denoise |
 | `hot_pixel_removal` | `z` | clip per-channel hot pixels above `z` MADs |
@@ -208,8 +208,9 @@ hand — that is exactly how pre-registration gets skipped. Instead:
 1. **Generate expectations programmatically as a pure function of inputs.** Write a
    small generator that, for each FOV, emits the step-1 expectation from
    `f(tissue, resolved panel, model class vocab)` only — reading **no** prediction.
-   Resolve the panel with the *same* path inference uses (`config.resolve_channel_name`)
-   so `panel_can_detect` reflects what the model actually sees, and **assert every
+   Resolve the panel with the *same* path inference uses
+   (`DCTConfig(...).resolve_channel_name`) so `panel_can_detect` reflects what the model
+   actually sees, and **assert every
    marker name exists in the model registry** (catches typos / phantom markers). Per
    tissue, pre-register `expected_unconfirmable` — expected constituents whose specific
    marker the panel commonly lacks (trophoblast/EVT, gut enterocytes/muscularis, nodal
@@ -234,10 +235,11 @@ hand — that is exactly how pre-registration gets skipped. Instead:
 4. **The artifact signature is NECESSARY but NOT SUFFICIENT — and the *kind* of edit
    that "fixes" it matters.** A bright channel can be a real abundant marker, not an
    artifact, so confirm with the loop — but be careful which op you trust:
-   - A **flat high pedestal is already removed by `min_max_normalize`** (which the model
-     always applies), so the principled `background_subtract_per_channel` often changes
-     little — that is the *correct* outcome and tells you the pedestal was never the
-     driver.
+   - A **flat high pedestal is removed by the terminal `min_max_normalize` in
+     `DEFAULT_CONFIG` / recommended hook configs**. The model does not normalize after a
+     custom hook, so the hook must end with `min_max_normalize`. In a properly normalized
+     hook, the principled `background_subtract_per_channel` often changes little — that
+     is the *correct* outcome and tells you the pedestal was never the driver.
    - A drop produced **only** by `channel_weight` / `channel_drop` (uniformly dimming the
      marker) is the **circular** edit — dimming any marker mechanically reduces its cell
      type, so it does *not* prove an artifact, even if multiple lineages shift.
@@ -274,9 +276,10 @@ inputs, committed before any prediction is judged.
   artifact (e.g. a transcription-factor marker positive in most pixels cannot be real).
 - **Judge at BOTH lineage and cell-type level.** A spurious type can hide inside a
   *correct* lineage — e.g. a panel with no mast marker still gets ~a third of cells called
-  Mast, which rolls into Myeloid, so a lineage-only check passes silently. Flag any cell
-  type predicted above a small fraction whose defining marker is absent from the panel; it
-  is almost always spurious.
+  Mast, which rolls into Myeloid, so a lineage-only check passes silently. Split
+  marker-absent cell types above a small fraction into candidates vs coverage caveats:
+  unexpected types are candidates for the loop; expected-but-unconfirmable biology is
+  logged and not looped.
 - **Prefer the gentlest effective op; re-diagnose instead of escalating.** If an edit
   doesn't help or over-corrects, switch to a different mechanism rather than just turning up
   the same op's strength — a stronger version of the wrong op usually makes things worse.

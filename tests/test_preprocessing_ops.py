@@ -88,12 +88,56 @@ def test_background_subtract_per_channel_can_target_named_channel():
     x += 1000.0  # both channels on a pedestal
     names = ["CD15", "CD8"]
     out = apply_config(
-        x, names,
+        x,
+        names,
         [{"op": "background_subtract_per_channel", "p": 50.0, "names": ["CD15"]}],
     )
     # only CD15 is corrected; CD8 is untouched
     np.testing.assert_allclose(out[1], x[1])
     assert float(out[0].mean()) < float(x[0].mean())
+
+
+def test_background_subtract_per_channel_empty_names_selects_none():
+    x = np.full((2, 4, 4), 10.0, dtype=np.float32)
+    out = apply_config(
+        x,
+        ["CD15", "CD8"],
+        [{"op": "background_subtract_per_channel", "names": []}],
+    )
+    np.testing.assert_allclose(out, x)
+
+
+def test_background_subtract_per_channel_deduplicates_names():
+    x = np.array([[[0.0, 10.0], [20.0, 30.0]]], dtype=np.float32)
+    once = apply_config(
+        x,
+        ["CD15"],
+        [{"op": "background_subtract_per_channel", "p": 50.0, "names": ["CD15"]}],
+    )
+    duplicate = apply_config(
+        x,
+        ["CD15"],
+        [
+            {
+                "op": "background_subtract_per_channel",
+                "p": 50.0,
+                "names": ["CD15", "CD15"],
+            }
+        ],
+    )
+    np.testing.assert_allclose(duplicate, once)
+
+
+def test_background_subtract_per_channel_ignores_nan_for_floor():
+    x = np.array([[[0.0, 1.0], [np.nan, 4.0]]], dtype=np.float32)
+    out = apply_config(
+        x,
+        ["CD15"],
+        [{"op": "background_subtract_per_channel", "p": 50.0}],
+    )
+
+    assert np.isnan(out[0, 1, 0])
+    np.testing.assert_allclose(out[0, [0, 1], [1, 1]], [0.0, 1.5])
 
 
 def test_unknown_op_raises():
