@@ -5,6 +5,7 @@ import pickle
 import pytest
 import torch
 
+from deepcell_types.training.dataloader import create_dataloader
 from deepcell_types.training.dataset import (
     CellIndexRecord,
     FOVGroupedSampler,
@@ -495,3 +496,185 @@ class TestEqualProportionBalancing:
         ds = self._make_dataset(["A"] * 10 + ["B"] * 5)
         idx = list(range(15))
         assert subsample_indices_per_class(ds, idx, None) == idx
+
+    def test_subsample_zero_is_empty_helper_contract(self):
+        ds = self._make_dataset(["A"] * 10 + ["B"] * 5)
+        idx = list(range(15))
+        assert subsample_indices_per_class(ds, idx, 0) == []
+
+
+def test_create_dataloader_rejects_unknown_class_balance_before_archive_load():
+    with pytest.raises(ValueError, match="class_balance"):
+        create_dataloader("unused.zarr", object(), class_balance="balanced")
+
+
+def test_create_dataloader_rejects_negative_size_data_before_archive_load():
+    with pytest.raises(ValueError, match="size_data"):
+        create_dataloader("unused.zarr", object(), class_balance="equal", size_data=-1)
+
+
+def test_create_dataloader_treats_size_data_zero_as_disabled(monkeypatch):
+    seen = {}
+
+    class _FakeDataset:
+        metadata = {}
+        indices = [
+            CellIndexRecord(
+                ds_idx=0,
+                ct_label="x",
+                ct_label_standard="A",
+                domain="CODEX",
+                cell_idx=0,
+                fov_name="F",
+                dataset_name="D",
+                centroid=(0.0, 0.0),
+            )
+        ]
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __len__(self):
+            return 1
+
+        def __getitem__(self, idx):
+            return idx
+
+    def _fake_load_fov_splits(dataset, split_file, strict=True):
+        return [0], []
+
+    def _fail_subsample(*args, **kwargs):
+        raise AssertionError("size_data=0 should disable the per-class cap")
+
+    def _fake_equal_weights(dataset, indices):
+        seen["indices"] = list(indices)
+        return torch.ones(len(indices))
+
+    monkeypatch.setattr(
+        "deepcell_types.training.dataset.FullImageDataset", _FakeDataset
+    )
+    monkeypatch.setattr(
+        "deepcell_types.training.dataloader.load_fov_splits", _fake_load_fov_splits
+    )
+    monkeypatch.setattr(
+        "deepcell_types.training.dataloader.subsample_indices_per_class",
+        _fail_subsample,
+    )
+    monkeypatch.setattr(
+        "deepcell_types.training.dataloader.compute_sample_weights_equal",
+        _fake_equal_weights,
+    )
+
+    train_loader, _val_loader, metadata = create_dataloader(
+        "unused.zarr",
+        object(),
+        batch_size=1,
+        num_workers=0,
+        split_file="split.json",
+        class_balance="equal",
+        size_data=0,
+    )
+
+    assert metadata["num_train"] == 1
+    assert seen["indices"] == [0]
+    assert list(train_loader.sampler) == [0]
+
+
+def test_create_dataloader_fov_split_preserves_legacy_weighted_default(monkeypatch):
+    class _FakeDataset:
+        metadata = {}
+        indices = [
+            CellIndexRecord(
+                ds_idx=0,
+                ct_label="x",
+                ct_label_standard="A",
+                domain="CODEX",
+                cell_idx=0,
+                fov_name="F",
+                dataset_name="D",
+                centroid=(0.0, 0.0),
+            )
+        ]
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __len__(self):
+            return 1
+
+        def __getitem__(self, idx):
+            return idx
+
+    def _fake_load_fov_splits(dataset, split_file, strict=True):
+        return [0], []
+
+    monkeypatch.setattr(
+        "deepcell_types.training.dataset.FullImageDataset", _FakeDataset
+    )
+    monkeypatch.setattr(
+        "deepcell_types.training.dataloader.load_fov_splits", _fake_load_fov_splits
+    )
+
+    train_loader, _val_loader, metadata = create_dataloader(
+        "unused.zarr",
+        object(),
+        batch_size=1,
+        num_workers=0,
+        split_file="split.json",
+    )
+
+    assert metadata["num_train"] == 1
+    assert isinstance(train_loader.sampler, FOVGroupedSampler)
+
+
+def test_create_dataloader_random_split_honors_explicit_class_balance(monkeypatch):
+    class _FakeDataset:
+        metadata = {}
+        indices = [
+            CellIndexRecord(
+                ds_idx=i,
+                ct_label="x",
+                ct_label_standard="A" if i < 3 else "B",
+                domain="CODEX",
+                cell_idx=i,
+                fov_name=f"F{i}",
+                dataset_name="D",
+                centroid=(0.0, 0.0),
+            )
+            for i in range(4)
+        ]
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __len__(self):
+            return len(self.indices)
+
+        def __getitem__(self, idx):
+            return idx
+
+    monkeypatch.setattr(
+        "deepcell_types.training.dataset.FullImageDataset", _FakeDataset
+    )
+
+    default_train, _default_val, _metadata = create_dataloader(
+        "unused.zarr",
+        object(),
+        batch_size=1,
+        num_workers=0,
+        use_fov_splits=False,
+        lengths=[3, 1],
+    )
+    assert not isinstance(default_train.sampler, FOVGroupedSampler)
+
+    balanced_train, _balanced_val, metadata = create_dataloader(
+        "unused.zarr",
+        object(),
+        batch_size=1,
+        num_workers=0,
+        use_fov_splits=False,
+        lengths=[3, 1],
+        class_balance="equal",
+    )
+    assert metadata["num_train"] == 3
+    assert isinstance(balanced_train.sampler, FOVGroupedSampler)

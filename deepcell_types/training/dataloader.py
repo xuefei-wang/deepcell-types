@@ -6,8 +6,11 @@ symbols are re-exported from ``dataset`` for backward compatibility.
 Contains ``create_dataloader`` (the full keyword API), the ``DataLoaderConfig``
 dataclass that bundles its 20+ knobs, and ``create_dataloader_from_config``
 (the dataclass-based wrapper). This module sits at the top of the training-data
-dependency chain: it imports the dataset core, transforms, samplers, and split
-helpers, but nothing imports it back.
+dependency chain: it imports transforms, samplers, and split helpers at module
+scope. ``dataset`` re-exports this module's symbols for back-compat, which would
+make a module-level ``from .dataset import ...`` here a circular import (it broke
+``import deepcell_types.training.dataloader`` when that ran before ``dataset``);
+the dataset core is therefore imported lazily inside ``create_dataloader``.
 """
 
 from dataclasses import dataclass, fields
@@ -17,7 +20,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
-from .dataset import FullImageDataset
 from .samplers import (
     FOVGroupedSampler,
     SequentialFOVGroupedSampler,
@@ -33,6 +35,9 @@ from .transforms import (
     _RandomHorizontalFlip,
     _RandomVerticalFlip,
 )
+
+
+_CLASS_BALANCE_SCHEMES = {"sqrt", "equal", "none"}
 
 
 def create_dataloader(
@@ -94,7 +99,8 @@ def create_dataloader(
         size_data: Faithful CellSighter ``subsample_const_size`` cap. When set
             (and ``class_balance="equal"``), the TRAIN pool is subsampled to at
             most ``size_data`` cells per class before sampler construction
-            (val/test untouched). Default None disables the cap.
+            (val/test untouched). Default None disables the cap; 0 is treated
+            as None for consistency with the CellSighter CLI.
         split_file: Path to pre-computed FOV split JSON (overrides use_fov_splits/seed)
         skip_distance_transform: Skip distance transform in patch extraction
         persistent_workers: Keep DataLoader workers alive between epochs
@@ -113,6 +119,23 @@ def create_dataloader(
         train_loader, val_loader, metadata dict
         (train_loader is None if only_test=True)
     """
+    # Imported lazily to avoid a circular import: ``dataset`` re-exports this
+    # module's symbols at its bottom, so a module-level import here would fail
+    # whenever ``dataloader`` is imported before ``dataset``.
+    from .dataset import FullImageDataset
+
+    if class_balance is not None and class_balance not in _CLASS_BALANCE_SCHEMES:
+        valid = ", ".join(sorted(_CLASS_BALANCE_SCHEMES))
+        raise ValueError(
+            f"class_balance must be one of {{{valid}}} or None, "
+            f"got {class_balance!r}"
+        )
+    if size_data is not None:
+        if size_data < 0:
+            raise ValueError(f"size_data must be >= 0 or None, got {size_data!r}")
+        if size_data == 0:
+            size_data = None
+
     # Default train-time spatial augmentation = H/V flips (DCT/MAPS behavior).
     # Callers (e.g. the faithful CellSighter baseline) can pass a richer
     # transform that operates on the same (C_max + 3, H, W) combined tensor.
@@ -182,10 +205,9 @@ def create_dataloader(
         # Resolve the class-balancing scheme. Explicit ``class_balance`` wins;
         # otherwise fall back to the legacy ``use_weighted_sampler`` boolean
         # (True -> sqrt-inverse-frequency, False -> uniform/none).
-        if class_balance is not None:
-            scheme = class_balance
-        else:
-            scheme = "sqrt" if use_weighted_sampler else "none"
+        scheme = class_balance if class_balance is not None else (
+            "sqrt" if use_weighted_sampler else "none"
+        )
 
         # Faithful CellSighter ``size_data`` cap (``subsample_const_size``): cap
         # the TRAIN pool to <= size_data cells/class BEFORE building the subset
@@ -313,6 +335,17 @@ def create_dataloader(
         train_subset, val_subset = random_split(
             dataset, lengths, generator=random_generator
         )
+        train_indices = list(train_subset.indices)
+        # Preserve the legacy random-split behavior unless callers opt into an
+        # explicit class_balance scheme. Historically use_weighted_sampler was
+        # only implemented on the FOV-split path.
+        scheme = class_balance if class_balance is not None else "none"
+
+        if scheme == "equal" and size_data is not None and len(train_indices) > 0:
+            train_indices = subsample_indices_per_class(
+                dataset, train_indices, size_data, seed=seed
+            )
+            train_subset = torch.utils.data.Subset(dataset, train_indices)
 
         if max_val_samples is not None and max_val_samples < len(val_subset):
             rng = np.random.default_rng(seed)
@@ -325,6 +358,26 @@ def create_dataloader(
             train_subset, train_transform, dropout_transform
         )
 
+        sampler = None
+        shuffle = True
+        if scheme in ("sqrt", "equal") and len(train_indices) > 0:
+            if scheme == "equal":
+                weights = compute_sample_weights_equal(dataset, train_indices)
+            else:
+                weights = compute_sample_weights(dataset, train_indices)
+            num_samples = len(weights)
+            if max_samples_per_epoch is not None:
+                num_samples = min(num_samples, max_samples_per_epoch)
+            sampler = FOVGroupedSampler(
+                weights,
+                num_samples,
+                dataset.indices,
+                train_indices,
+                replacement=True,
+                seed=seed,
+            )
+            shuffle = False
+
         from deepcell_types.training.utils import make_generator, worker_init_fn
 
         train_gen = make_generator(seed)
@@ -332,7 +385,8 @@ def create_dataloader(
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
-            shuffle=True,
+            shuffle=shuffle,
+            sampler=sampler,
             num_workers=num_workers,
             prefetch_factor=4 if num_workers > 0 else None,
             drop_last=True,

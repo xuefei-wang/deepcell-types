@@ -447,7 +447,7 @@ def evaluate(
 )
 @click.option(
     "--size_data",
-    type=int,
+    type=click.IntRange(min=0),
     default=1000,
     help="Faithful CellSighter per-class training-pool cap (subsample_const_size; "
     "paper config size_data=1000). Only applied when --class_balance=equal. "
