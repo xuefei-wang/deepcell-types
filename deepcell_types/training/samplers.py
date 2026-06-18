@@ -186,6 +186,7 @@ class SequentialFOVGroupedSampler(Sampler):
         self._ds_idx_map = [int(dataset_indices[i].ds_idx) for i in train_indices]
         self._base_seed = int(seed)
         self._epoch = 0
+        self._group_offsets: dict[int, int] = {}
         # Optional per-epoch cap. When set, each epoch emits the first
         # ``max_samples`` positions in the (per-epoch reshuffled) FOV-group
         # order, so successive epochs draw a different cache-local subset of
@@ -212,11 +213,18 @@ class SequentialFOVGroupedSampler(Sampler):
         cap = self._cap()
         emitted = 0
         for ds_idx in ordered_ds:
-            for pos in groups[ds_idx]:
+            positions = groups[ds_idx]
+            start = self._group_offsets.get(ds_idx, 0) % len(positions)
+            consumed = 0
+            for i in range(len(positions)):
                 if emitted >= cap:
+                    self._group_offsets[ds_idx] = (start + consumed) % len(positions)
                     return
+                pos = positions[(start + i) % len(positions)]
                 yield pos
                 emitted += 1
+                consumed += 1
+            self._group_offsets[ds_idx] = (start + consumed) % len(positions)
 
     def __len__(self):
         return self._cap()

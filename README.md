@@ -129,7 +129,8 @@ Training entry points live under `scripts/`:
 - `scripts/train.py` — main training loop (stage 1: backbone, weighted sampler on).
 - `scripts/retrain_head.py` — stage 2: freeze the backbone, retrain the residual-MLP
   cell-type head on the natural class distribution (sampler off). This decoupled
-  recipe is the default and produces the best model (`ct_head_arch="resmlp"`).
+  recipe is the recommended paper workflow and produces the best model
+  (`ct_head_arch="resmlp"`).
 - `scripts/pretrain.py` — masked-marker pretraining.
 - `scripts/predict.py` — batched evaluation over a zarr archive.
 - `scripts/evaluate_on_test.sh` — **canonical evaluation on the held-out 129-FOV

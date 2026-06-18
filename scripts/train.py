@@ -33,6 +33,7 @@ from deepcell_types.training.config import (
     WARMUP_PCT,
     CELL_TYPE_HIERARCHY,
 )
+from deepcell_types.training.class_weights import compute_class_weights
 from deepcell_types.training.dataset import (
     create_dataloader,
     AugmentedDataset,
@@ -76,35 +77,6 @@ def _git_commit():
 
 # Default loss weights for multi-task training
 DEFAULT_LOSS_WEIGHTS = {"ct": 1.0, "domain": 0.0, "marker_pos": 1.0}
-
-
-def compute_class_weights(dct_config, dataset, label_remap, train_indices):
-    """Compute sqrt-inverse-frequency class weights for FocalLoss.
-
-    Counts are taken over the TRAIN indices only — never the whole-archive
-    ``dataset.ct_counts``, which includes val/test cells. Using whole-archive
-    counts leaks evaluation-set label frequencies into the training objective
-    (over-weighting classes concentrated in val/test, under-weighting those
-    concentrated in train). Weights are indexed in compact 0-indexed label space.
-    """
-    ct_counts = defaultdict(int)
-    for i in train_indices:
-        ct_counts[dataset.indices[i].ct_label_standard] += 1
-    total = sum(ct_counts.values())
-    n_classes = len(dct_config.ct2idx)
-
-    weights = torch.ones(n_classes)
-    for ct, idx in dct_config.ct2idx.items():
-        compact_idx = label_remap[idx].item()
-        count = ct_counts.get(ct, 0)
-        if count > 0:
-            weights[compact_idx] = np.sqrt(total / count)
-        else:
-            weights[compact_idx] = 1.0
-
-    # Normalize so mean weight = 1
-    weights = weights / weights.mean()
-    return weights
 
 
 def forward_one_batch(
@@ -506,7 +478,9 @@ def main(
     if pretrained_path and Path(pretrained_path).exists():
         print(f"Loading pre-trained weights from {pretrained_path}")
         pretrained_state = torch.load(
-            pretrained_path, map_location=device, weights_only=False  # trusted local ckpt; pretrain.py saves numpy scalars
+            pretrained_path,
+            map_location=device,
+            weights_only=False,  # trusted local ckpt; pretrain.py saves numpy scalars
         )
         # Accept both the legacy plain-state_dict and the new bundled checkpoint
         # (which stores the backbone under the "model" key).
@@ -612,6 +586,11 @@ def main(
         "svd_embeddings_path": svd_embeddings_path,
         "max_samples_per_epoch": max_samples_per_epoch,
         "max_val_samples": max_val_samples,
+        # Stage-1 training always uses the weighted sampler (the sampler-off
+        # recipe lives in scripts/retrain_head.py); record it for provenance.
+        "use_weighted_sampler": True,
+        "freeze_backbone": bool(freeze_backbone),
+        "unfreeze_ct_head": bool(unfreeze_ct_head),
         # Optimization-shape hyperparameters that move metrics by ≥0.5pp.
         "focal_gamma": focal_gamma,
         "warmup_pct": warmup_pct,
@@ -711,7 +690,9 @@ def main(
         if not Path(resume_path).exists():
             raise FileNotFoundError(f"--resume_path {resume_path} does not exist")
         logger.info("Resuming from %s", resume_path)
-        resume_ckpt = torch.load(resume_path, map_location=device, weights_only=False)  # trusted local ckpt
+        resume_ckpt = torch.load(
+            resume_path, map_location=device, weights_only=False
+        )  # trusted local ckpt
 
         if not isinstance(resume_ckpt, dict) or "optimizer" not in resume_ckpt:
             # Legacy checkpoint (only `model` key, or plain state_dict): fall back to
@@ -930,7 +911,9 @@ def main(
     # test number. It is labeled "val_final" accordingly. The held-out test metric
     # for the paper is produced by `scripts/predict.py` on the split file's
     # `heldout` FOVs (which load_fov_splits excludes from both train and val).
-    checkpoint = torch.load(best_model_path, map_location=device, weights_only=False)  # trusted local ckpt
+    checkpoint = torch.load(
+        best_model_path, map_location=device, weights_only=False
+    )  # trusted local ckpt
     model.load_state_dict(checkpoint["model"])
     model.eval()
 
