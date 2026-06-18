@@ -6,8 +6,9 @@ symbols are re-exported from ``dataset`` for backward compatibility.
 Contains ``create_dataloader`` (the full keyword API), the ``DataLoaderConfig``
 dataclass that bundles its 20+ knobs, and ``create_dataloader_from_config``
 (the dataclass-based wrapper). This module sits at the top of the training-data
-dependency chain: it imports the dataset core, transforms, samplers, and split
-helpers, but nothing imports it back.
+dependency chain. The dataset core imports the public dataloader wrappers for
+backward compatibility, so the ``FullImageDataset`` implementation is imported
+lazily inside ``create_dataloader``.
 """
 
 from dataclasses import dataclass, fields
@@ -17,7 +18,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
-from .dataset import FullImageDataset
 from .samplers import (
     FOVGroupedSampler,
     SequentialFOVGroupedSampler,
@@ -78,9 +78,10 @@ def create_dataloader(
         split_file: Path to pre-computed FOV split JSON (overrides use_fov_splits/seed)
         skip_distance_transform: Skip distance transform in patch extraction
         persistent_workers: Keep DataLoader workers alive between epochs
-        max_samples_per_epoch: Cap the number of samples drawn per epoch by the
-            WeightedRandomSampler. Useful for large datasets where iterating
-            over all samples per epoch is impractical (e.g. 7M samples).
+        max_samples_per_epoch: Cap the number of training samples drawn per
+            epoch by the active sampler. Useful for large datasets where
+            iterating over all samples per epoch is impractical (e.g. 7M
+            samples).
             If None (default), draws len(train_indices) samples per epoch.
         max_val_samples: Cap the validation set to this many samples (fixed random subset,
             seeded for reproducibility). Useful to keep validation fast. If None (default),
@@ -114,6 +115,8 @@ def create_dataloader(
 
     # Only use persistent_workers when num_workers > 0
     pw = persistent_workers and num_workers > 0
+
+    from .dataset import FullImageDataset
 
     dataset = FullImageDataset(
         zarr_dir,

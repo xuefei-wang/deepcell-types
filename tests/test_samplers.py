@@ -274,6 +274,21 @@ class TestSequentialFOVGroupedSampler:
         assert list(sampler) == []
         assert len(sampler) == 0
 
+    def test_capped_epoch_rotates_within_fov_for_tail_coverage(self):
+        dataset_indices = self._build([5])
+        sampler = SequentialFOVGroupedSampler(
+            dataset_indices, list(range(5)), seed=0, max_samples=3
+        )
+
+        seen = set()
+        for _ in range(4):
+            epoch = list(sampler)
+            assert len(epoch) == 3
+            seen.update(epoch)
+
+        assert seen == set(range(5))
+        assert len(sampler) == 3
+
 
 # =============================================================================
 # R7 L2 — LazyMarkerPositivityDict: lazy load semantics
