@@ -53,3 +53,43 @@ def test_cellsighter_model_forward_shape_and_determinism():
     with torch.no_grad():
         y2 = model2(x)
     assert torch.allclose(y, y2)
+
+
+def test_cellsighter_pretrained_constructor_replaces_head_after_backbone_load(
+    monkeypatch,
+):
+    torchvision = pytest.importorskip("torchvision")
+    pytest.importorskip("pandas")  # cellsighter.model -> training.utils imports pandas
+    from torch import nn
+
+    from deepcell_types.baselines.cellsighter.model import CellSighterModel
+
+    calls = []
+
+    class TinyResNet(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.fc = nn.Linear(64, 1000)
+
+        def forward(self, x):
+            return self.fc(torch.zeros(x.shape[0], 64, device=x.device))
+
+    def fake_resnet18(**kwargs):
+        calls.append(kwargs)
+        return TinyResNet()
+
+    monkeypatch.setattr(torchvision.models, "resnet18", fake_resnet18)
+
+    model = CellSighterModel(
+        input_channels=6,
+        num_classes=4,
+        model_size="resnet18",
+        pretrained=True,
+        cifar_stem=True,
+    )
+
+    assert "num_classes" not in calls[0]
+    assert model.model.fc.out_features == 4
+    assert model.model.conv1.in_channels == 6

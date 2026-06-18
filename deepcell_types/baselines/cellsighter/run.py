@@ -6,6 +6,7 @@ Reference:
 - Code: https://github.com/KerenLab/CellSighter
 """
 
+import json
 import os
 import click
 import numpy as np
@@ -34,6 +35,38 @@ from .model import CellSighterModel, convert_batch_for_cellsighter
 from .transforms import build_cellsighter_train_transform
 
 
+def _split_fovs(split_file: str, role: str) -> set[tuple[str, str]]:
+    with open(split_file) as f:
+        data = json.load(f)
+    return {
+        (ds, fov)
+        for ds, fovs in data.get(role, {}).items()
+        for fov in fovs
+    }
+
+
+def _validate_heldout_test_split(split_file: str | None, test_split_file: str) -> None:
+    """Validate coordinated train/test split files for final held-out eval."""
+    if not split_file:
+        raise click.UsageError(
+            "--test_split_file requires --split_file so the held-out test FOVs "
+            "can be checked against the exact training FOVs."
+        )
+
+    train_fovs = _split_fovs(split_file, "train")
+    selection_fovs = _split_fovs(split_file, "val")
+    test_fovs = _split_fovs(test_split_file, "val")
+    leak = (train_fovs | selection_fovs) & test_fovs
+    if leak:
+        raise click.UsageError(
+            f"{len(leak)} FOV(s) appear in the training/model-selection split "
+            f"(--split_file train/val) and the held-out test split "
+            f"(--test_split_file 'val'), e.g. {sorted(leak)[:5]}. The "
+            "reported number would leak training or selection data; use coordinated "
+            "splits (see scripts/split_val_for_test.py)."
+        )
+
+
 def train_one_epoch(
     model: nn.Module,
     dataloader: DataLoader,
@@ -44,6 +77,7 @@ def train_one_epoch(
     num_markers: int = 269,
     scaler: torch.amp.GradScaler | None = None,
     amp_dtype: torch.dtype | None = None,
+    center_crop_size: int | None = None,
 ) -> float:
     """
     Train for one epoch.
@@ -82,7 +116,9 @@ def train_one_epoch(
         compact_labels = label_remap[ct_idx]
 
         # Convert to CellSighter format (globally aligned channels)
-        x = convert_batch_for_cellsighter(batch_data, num_markers)
+        x = convert_batch_for_cellsighter(
+            batch_data, num_markers, center_crop_size=center_crop_size
+        )
 
         # Forward pass with optional AMP
         optimizer.zero_grad()
@@ -113,6 +149,7 @@ def evaluate(
     label_remap: torch.Tensor,
     num_markers: int = 269,
     amp_dtype: torch.dtype | None = None,
+    center_crop_size: int | None = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], List[str], List[int]]:
     """
     Evaluate model on dataloader.
@@ -156,7 +193,9 @@ def evaluate(
         compact_true = label_remap[batch_data.ct_idx].cpu().numpy()
 
         # Convert to CellSighter format (globally aligned channels)
-        x = convert_batch_for_cellsighter(batch_data, num_markers)
+        x = convert_batch_for_cellsighter(
+            batch_data, num_markers, center_crop_size=center_crop_size
+        )
 
         # Forward pass (returns softmax probabilities in eval mode)
         if use_amp:
@@ -238,7 +277,14 @@ def evaluate(
     "--crop_size",
     type=int,
     default=60,
-    help="Patch crop size. Default 60 matches the original CellSighter paper.",
+    help="Final model input crop size. Default 60 matches the original CellSighter paper.",
+)
+@click.option(
+    "--augment_crop_size",
+    type=int,
+    default=128,
+    help="Pre-augmentation extraction crop size. Default 128 matches the "
+    "original CellSighter recipe before center-cropping to --crop_size.",
 )
 @click.option(
     "--mask_self",
@@ -320,6 +366,7 @@ def main(
     pretrained: bool,
     model_size: str,
     crop_size: int,
+    augment_crop_size: int,
     mask_self: bool,
     cifar_stem: bool,
     allow_split_mismatch: bool,
@@ -370,14 +417,18 @@ def main(
 
     use_cuda = device.type == "cuda"
 
+    if augment_crop_size < crop_size:
+        raise click.UsageError("--augment_crop_size must be >= --crop_size")
+
     # Faithful CellSighter: full crop incl. neighbor intensities (mask_self=False),
-    # 60x60 crops, and the original's geometric augmentation pipeline.
+    # a larger pre-augmentation crop center-cropped to 60x60, and the original's
+    # geometric augmentation pipeline.
     print(
-        f"Crop: {crop_size}x{crop_size} | "
+        f"Crop: {augment_crop_size}x{augment_crop_size} -> {crop_size}x{crop_size} | "
         f"intensities: {'self-masked (ablation)' if mask_self else 'unmasked (faithful)'} | "
         f"stem: {'CIFAR (ablation)' if cifar_stem else 'ImageNet (faithful)'}"
     )
-    cs_train_transform = build_cellsighter_train_transform()
+    cs_train_transform = build_cellsighter_train_transform(center_crop_size=crop_size)
 
     # Load train and test data
     train_loader, test_loader, metadata = create_dataloader(
@@ -396,8 +447,8 @@ def main(
         max_samples_per_epoch=500_000,  # Cap iterations (~2K batches/epoch at bs=256)
         multiprocessing_context="spawn",  # zarr v3 is not fork-safe
         pin_memory=use_cuda,  # Faster CPU→GPU transfers
-        crop_size=crop_size,
-        output_size=crop_size,  # extract directly at crop_size (no resize)
+        crop_size=augment_crop_size,
+        output_size=augment_crop_size,  # transform/conversion center-crops later
         mask_intensities=mask_self,  # faithful CellSighter: False -> keep neighbors
         train_transform=cs_train_transform,
         split_strict=not allow_split_mismatch,
@@ -457,6 +508,7 @@ def main(
             num_markers,
             scaler=scaler,
             amp_dtype=amp_dtype,
+            center_crop_size=crop_size,
         )
         print(f"  Train Loss: {train_loss:.4f}")
 
@@ -471,6 +523,7 @@ def main(
                 label_remap,
                 num_markers,
                 amp_dtype=amp_dtype,
+                center_crop_size=crop_size,
             )
             # Shared hierarchy collapse (Tcell + Stromal) — matches main model
             metrics = compute_baseline_metrics(
@@ -502,6 +555,25 @@ def main(
                         "model_state_dict": state_dict,
                         "optimizer_state_dict": optimizer.state_dict(),
                         "macro_accuracy": best_macro_acc,
+                        "selection_metric": "macro_accuracy",
+                        "model_config": {
+                            "model_size": model_size,
+                            "cifar_stem": cifar_stem,
+                            "input_channels": input_channels,
+                            "num_classes": num_classes,
+                        },
+                        "data_config": {
+                            "crop_size": crop_size,
+                            "augment_crop_size": augment_crop_size,
+                            "mask_self": mask_self,
+                            "split_mode": split_mode,
+                            "split_file": split_file,
+                            "test_split_file": test_split_file,
+                            "allow_split_mismatch": allow_split_mismatch,
+                            "seed": seed,
+                            "ct2idx": dct_config.ct2idx,
+                            "marker2idx": dct_config.marker2idx,
+                        },
                     },
                     model_path,
                 )
@@ -526,30 +598,7 @@ def main(
         # set of split_file), or the reported number leaks training data.
         # load_fov_splits only checks overlap *within* a single file, so this
         # cross-file overlap must be checked explicitly.
-        if split_file:
-            import json
-
-            with open(split_file) as f:
-                _train_fovs = {
-                    (ds, fov)
-                    for ds, fovs in json.load(f).get("train", {}).items()
-                    for fov in fovs
-                }
-            with open(test_split_file) as f:
-                _test_fovs = {
-                    (ds, fov)
-                    for ds, fovs in json.load(f).get("val", {}).items()
-                    for fov in fovs
-                }
-            _leak = _train_fovs & _test_fovs
-            if _leak:
-                raise click.UsageError(
-                    f"{len(_leak)} FOV(s) appear in both the training split "
-                    f"(--split_file 'train') and the held-out test split "
-                    f"(--test_split_file 'val'), e.g. {sorted(_leak)[:5]}. The "
-                    "reported number would leak training data; use coordinated "
-                    "splits (see scripts/split_val_for_test.py)."
-                )
+        _validate_heldout_test_split(split_file, test_split_file)
         print(f"\nRebuilding eval loader on held-out test split: {test_split_file}")
         _, test_loader, _ = create_dataloader(
             zarr_dir=zarr_dir,
@@ -567,10 +616,11 @@ def main(
             max_samples_per_epoch=500_000,
             multiprocessing_context="spawn",
             pin_memory=use_cuda,
-            crop_size=crop_size,
-            output_size=crop_size,
+            crop_size=augment_crop_size,
+            output_size=augment_crop_size,
             mask_intensities=mask_self,
             split_strict=not allow_split_mismatch,
+            seed=seed,
         )
     else:
         print(
@@ -597,6 +647,7 @@ def main(
         label_remap,
         num_markers=num_markers,
         amp_dtype=amp_dtype,
+        center_crop_size=crop_size,
     )
     # Shared hierarchy collapse (Tcell + Stromal) — matches main model
     metrics = compute_baseline_metrics(

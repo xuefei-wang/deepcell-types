@@ -72,3 +72,13 @@ def test_convert_batch_index0_clobber_quirk_preserved():
     bd = _make_batch([2.0, 3.0, 5.0], [0, 3, -1], [False, False, True], 0.1, 0.9)
     out = convert_batch_for_cellsighter(bd, num_markers=4)
     assert out.reshape(-1).tolist() == pytest.approx([0.0, 0.0, 0.0, 3.0, 0.1, 0.9])
+
+
+def test_convert_batch_center_crops_after_channel_alignment():
+    from deepcell_types.baselines.cellsighter.model import convert_batch_for_cellsighter
+
+    bd = _make_batch([2.0, 3.0], [1, 3], [False, False], 0.7, 0.2, H=3, W=3)
+    out = convert_batch_for_cellsighter(bd, num_markers=4, center_crop_size=1)
+
+    assert tuple(out.shape) == (1, 6, 1, 1)
+    assert out.reshape(-1).tolist() == pytest.approx([0.0, 2.0, 0.0, 3.0, 0.7, 0.2])

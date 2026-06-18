@@ -41,12 +41,12 @@ class _RandomRotation:
 
 
 class _PerChannelShift:
-    """Independently shift each intensity channel by up to ``max_shift`` px.
+    """Independently shift each channel by up to ``max_shift`` px.
 
     Matches the original ``ShiftAugmentation`` (per-marker registration jitter):
-    each intensity channel is shifted with probability ``p`` by a random integer
-    offset in ``[-max_shift, max_shift]`` along H and W, with zero fill. The
-    trailing ``n_context`` mask channels (segmentation) are left untouched.
+    each channel in the stacked image+mask tensor is shifted with probability
+    ``p`` by a random integer offset in ``[-max_shift, max_shift]`` along H and
+    W, with zero fill.
     """
 
     def __init__(self, max_shift: int = 5, p: float = 0.5, n_context: int = 3):
@@ -55,7 +55,7 @@ class _PerChannelShift:
         self.n_context = n_context
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        C = x.shape[0] - self.n_context
+        C = x.shape[0]
         if C <= 0 or torch.rand(()) >= self.p:
             return x
         H, W = x.shape[-2], x.shape[-1]
@@ -68,7 +68,7 @@ class _PerChannelShift:
         # Vectorized per-channel shift via grid_sample (channels as batch).
         # nearest + align_corners gives an exact integer-pixel shift; zeros
         # padding makes it a true shift (not a wrap), matching the loop version.
-        inten = x[:C].unsqueeze(1)  # (C, 1, H, W)
+        stacked = x.unsqueeze(1)  # (C, 1, H, W)
         ys = torch.linspace(-1.0, 1.0, H)
         xs = torch.linspace(-1.0, 1.0, W)
         gy, gx = torch.meshgrid(ys, xs, indexing="ij")  # (H, W) each
@@ -78,11 +78,9 @@ class _PerChannelShift:
         grid[..., 0] -= (2.0 * dx / max(W - 1, 1)).view(C, 1, 1)
         grid[..., 1] -= (2.0 * dy / max(H - 1, 1)).view(C, 1, 1)
         shifted = F.grid_sample(
-            inten, grid, mode="nearest", padding_mode="zeros", align_corners=True
+            stacked, grid, mode="nearest", padding_mode="zeros", align_corners=True
         )  # (C, 1, H, W)
-        out = x.clone()
-        out[:C] = shifted[:, 0]
-        return out
+        return shifted[:, 0]
 
 
 class _MaskDilation:
@@ -117,14 +115,25 @@ class _MaskDilation:
         return x
 
 
+class _CenterCrop:
+    def __init__(self, size: int):
+        self.size = size
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        return TF.center_crop(x, [self.size, self.size])
+
+
 def build_cellsighter_train_transform(
-    max_shift: int = 5, n_context: int = 3, flip_p: float = 0.75
+    max_shift: int = 5,
+    n_context: int = 3,
+    flip_p: float = 0.75,
+    center_crop_size: int | None = None,
 ):
     """Compose the faithful CellSighter geometric augmentation.
 
     Returns a callable ``(C_max + n_context, H, W) -> (C_max + n_context, H, W)``
     usable as the ``train_transform`` of ``create_dataloader``. Order mirrors the
-    original: mask dilation -> rotation -> per-channel shift -> flips.
+    original: mask dilation -> rotation -> per-channel shift -> flips -> center crop.
     """
     # Local import to reuse the framework's flip primitives without a cycle.
     from deepcell_types.training.transforms import (
@@ -133,12 +142,13 @@ def build_cellsighter_train_transform(
         _RandomVerticalFlip,
     )
 
-    return _Compose(
-        [
-            _MaskDilation(p=0.5, n_context=n_context),
-            _RandomRotation(p=1.0),
-            _PerChannelShift(max_shift=max_shift, p=0.5, n_context=n_context),
-            _RandomHorizontalFlip(p=flip_p),
-            _RandomVerticalFlip(p=flip_p),
-        ]
-    )
+    transforms = [
+        _MaskDilation(p=0.5, n_context=n_context),
+        _RandomRotation(p=1.0),
+        _PerChannelShift(max_shift=max_shift, p=0.5, n_context=n_context),
+        _RandomHorizontalFlip(p=flip_p),
+        _RandomVerticalFlip(p=flip_p),
+    ]
+    if center_crop_size is not None:
+        transforms.append(_CenterCrop(center_crop_size))
+    return _Compose(transforms)

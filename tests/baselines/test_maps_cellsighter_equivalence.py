@@ -24,7 +24,7 @@ PKG = Path(__file__).resolve().parents[2] / "deepcell_types" / "baselines"
 MODEL_ORIG_SHA = {
     "maps": "29202958b4326a542732663eb92541681d1d3a10ebc0767bad547416249edc00",
     # cellsighter: faithful-reimplementation drift guard (ImageNet stem, see docstring).
-    "cellsighter": "83629b114b193cc945f23e49e22743ab53d0788a0045d98659bc2f97603d3f5f",
+    "cellsighter": "27650902077404b3489a605b3f064e9da4a2a9ea1d8de52cd6151580c0916fd0",
 }
 # Re-pinned after removing the locally-added ``--min_channels`` CLI option
 # (an unused channel-count filter that caused unfair baseline comparisons via
@@ -38,7 +38,7 @@ RUN_ORIG_SHA = {
     "maps": "78888f8088b9ed3574a3e48cfb86e2317da224e1bb12c507a4e727cc32ece05e",
     # cellsighter: faithful-reimplementation drift guard, not upstream equivalence.
     # This is the sha of run.py with the relocation import rewrite inverted.
-    "cellsighter": "94d5fbf6fa810234b23da2742922df42606ec0141622259c129535d843af2ea4",
+    "cellsighter": "1811bab8ad24f2b9b4f7fa8354eaa22fec9a417ebfbd993c54a68a67f20d1f3c",
 }
 INIT_ORIG_SHA = {
     "maps": "5a0a765d62d2f11c841da99f34ccd63b226b47285fe85b6a9edbf92636a58f75",

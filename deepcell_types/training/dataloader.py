@@ -5,9 +5,9 @@ symbols are re-exported from ``dataset`` for backward compatibility.
 
 Contains ``create_dataloader`` (the full keyword API), the ``DataLoaderConfig``
 dataclass that bundles its 20+ knobs, and ``create_dataloader_from_config``
-(the dataclass-based wrapper). This module sits at the top of the training-data
-dependency chain: it imports the dataset core, transforms, samplers, and split
-helpers, but nothing imports it back.
+(the dataclass-based wrapper). ``FullImageDataset`` is imported lazily inside
+``create_dataloader`` because ``dataset`` re-exports these dataloader helpers
+for backward compatibility.
 """
 
 from dataclasses import dataclass, fields
@@ -17,7 +17,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
-from .dataset import FullImageDataset
 from .samplers import (
     FOVGroupedSampler,
     SequentialFOVGroupedSampler,
@@ -123,6 +122,8 @@ def create_dataloader(
 
     # Only use persistent_workers when num_workers > 0
     pw = persistent_workers and num_workers > 0
+
+    from .dataset import FullImageDataset
 
     dataset = FullImageDataset(
         zarr_dir,
@@ -334,6 +335,12 @@ class DataLoaderConfig:
     multiprocessing_context: Optional[Any] = None
     pin_memory: bool = False
     numpy_cache_max_bytes: Optional[int] = None
+    fov_grouped_train: bool = False
+    crop_size: Optional[int] = None
+    output_size: Optional[int] = None
+    mask_intensities: bool = True
+    train_transform: Optional[Any] = None
+    split_strict: bool = True
 
 
 def create_dataloader_from_config(zarr_dir, dct_config, config: DataLoaderConfig):

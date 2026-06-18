@@ -57,18 +57,17 @@ class CellSighterModel(nn.Module):
                 if pretrained
                 else None
             )
-            self.model = torchvision.models.resnet18(
-                weights=weights, num_classes=num_classes
-            )
+            self.model = torchvision.models.resnet18(weights=weights)
         else:
             weights = (
                 torchvision.models.ResNet50_Weights.IMAGENET1K_V1
                 if pretrained
                 else None
             )
-            self.model = torchvision.models.resnet50(
-                weights=weights, num_classes=num_classes
-            )
+            self.model = torchvision.models.resnet50(weights=weights)
+
+        in_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(in_features, num_classes)
 
         if cifar_stem:
             # CIFAR-style stem: 3×3 stride-1 conv + no maxpool, for 32×32 crops.
@@ -105,9 +104,19 @@ class CellSighterModel(nn.Module):
         return out
 
 
+def _center_crop_tensor(x: torch.Tensor, size: int) -> torch.Tensor:
+    H, W = x.shape[-2:]
+    if size > H or size > W:
+        raise ValueError(f"center_crop_size={size} exceeds input spatial shape {(H, W)}")
+    top = (H - size) // 2
+    left = (W - size) // 2
+    return x[..., top : top + size, left : left + size]
+
+
 def convert_batch_for_cellsighter(
     batch_data: BatchData,
     num_markers: int,
+    center_crop_size: int | None = None,
 ) -> torch.Tensor:
     """
     Convert batch from dataset format to CellSighter format with global channel alignment.
@@ -118,6 +127,9 @@ def convert_batch_for_cellsighter(
     Args:
         batch_data: BatchData instance
         num_markers: Total number of unique markers (269)
+        center_crop_size: Optional final model input size. Faithful
+            CellSighter extracts a larger pre-augmentation crop and center-crops
+            to the model input size after augmentation.
 
     Returns:
         cellsighter_input: (B, num_markers+2, H, W) - [globally aligned channels, cell mask, neighbor mask]
@@ -148,4 +160,10 @@ def convert_batch_for_cellsighter(
     neighbor_masks = batch_data.spatial_context[:, 1:2, :, :]  # (B, 1, H, W)
 
     # Concatenate: (B, num_markers+2, H, W)
-    return torch.cat([global_patches, cell_masks, neighbor_masks], dim=1)
+    out = torch.cat([global_patches, cell_masks, neighbor_masks], dim=1)
+    if center_crop_size is not None and out.shape[-2:] != (
+        center_crop_size,
+        center_crop_size,
+    ):
+        out = _center_crop_tensor(out, center_crop_size)
+    return out
