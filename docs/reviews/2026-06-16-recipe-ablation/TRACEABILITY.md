@@ -5,7 +5,7 @@ maps to a specific checkpoint (sha256), the code commit it was trained AND evalu
 under, and the prediction CSV (sha256) the number was computed from.
 
 **Common to all rows:** archive `expanded-tissuenet.zarr` fingerprint `f5b6ed52`;
-test split = 129 FOVs / 486,705 cells (`fov_split_test_eval.json`, val=129 test);
+test split = 129 FOVs / 486,705 cells (`splits/fov_split_test_current.json`, val=129 test);
 metric = repo `hierarchical_macro_f1` (parent→child credit); full coverage
 (`--ct_abstention_k 0`, no abstention). Both `d13fd54` and `b598710` are ancestors
 of `xuefei/master` (PR #41), so they resolve in repo history.
@@ -36,9 +36,9 @@ head still loads there because the checkpoint config carries `n_celltypes`.
   (`*_config.json` here) — `ct_head_arch`, `lr`, `focal_gamma`, `domain_weight`,
   `no_class_weights`, `split_file`, `svd_embeddings_path`, `archive_fingerprint`.
 
-## Self-pinning (gap now closed)
+## Self-pinning gap
 The rows above predate self-pinning, so their train/eval commits were reconstructed from
-the pin worktrees' HEADs (this manifest is their source of truth). Going forward this is
-automatic: `scripts/train.py` now records `CKPT_CONFIG["git_commit"] = git rev-parse HEAD`
-of the running checkout — implemented in **`ef1229f`** (PR #41). Checkpoints trained from
-that commit onward carry their own code commit in `config["git_commit"]`.
+the pin worktrees' HEADs (this manifest is their source of truth). The branch that added
+this report does not itself change `scripts/train.py`; checkpoint self-pinning was added
+later on `master` in **`ef1229f`**. Checkpoints trained from that commit onward carry
+their own code commit in `config["git_commit"]`.

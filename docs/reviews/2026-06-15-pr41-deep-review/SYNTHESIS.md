@@ -4,6 +4,10 @@
 
 **Headline count (deduped): 7 blocker themes, 9 high, ~16 medium, ~8 low.**
 
+**Status note:** this file is a historical snapshot of the 2026-06-15 review
+session. Several blockers listed below were fixed by later commits in PR #41;
+the current status is summarized in `../README.md`.
+
 ## Review team
 | Dimension | Findings | Report |
 |---|---|---|
@@ -28,22 +32,28 @@ Three independent failure modes, each documented in the code itself, all biasing
 - **Double-weighting** — by default the `WeightedRandomSampler` (floored at 1000) AND FocalLoss class weights (no floor) are both active; net rare-class boost ≈ `total/316` vs intended `sqrt(total/N)`. The metrics.py warning describes exactly this; the default does it anyway. Baselines don't double-weight. *(experimental-design B2, numerical BLOCKER, complexity B1; train.py:408,615-617, samplers.py:42-45)*
 - **Abstention applied to "ours" only** — `apply_abstention` docstring mandates DCT-only, `k=0.2` "chosen to widen macro_F1 separation over the strongest baseline." Per prior project analysis, scoring all methods at matched coverage erases the +4.3pp lead. *(experimental-design B3+M1, tests B1, api B2; abstention.py:20-31,86-91, scripts/predict.py:446-511)*
 
-> **Directly relevant to this task.** Ripping out the weighted sampler resolves the double-weighting half of B-1. The class-weight leak and the abstention asymmetry are separate decisions that still need to be made and re-validated on the retrained model.
+> **Current status:** the class-weight leakage was fixed later in PR #41 by
+> counting over `train_indices`. The sampler/class-weight double-counting still
+> applies to the stage-1 training default unless `--no_class_weights` is passed.
+> The abstention asymmetry remains a separate comparison-fairness decision.
 
 ### B-2. `predict()` silently breaks on NumPy ≥ 2.0 (install/release blocker)
 `np.ptp` at `preprocessing.py:246` is on the live inference path; removed as a free function in NumPy 2.0; `numpy>=1.24` permits 2.x. The identical call was already fixed at line 140 but this one was missed. A fresh `pip install deepcell-types` today pulls NumPy 2.x → `AttributeError` on the first `predict()`. *(deps HIGH — calibrated up to blocker: it breaks the advertised one-line install.)*
+**Current status:** fixed later in PR #41; `_normalize_per_channel` now computes `np.max(...) - min_vals`.
 
 ### B-3. Checkpoint deserialization RCE on old torch
-`_torch_load_weights` falls back to `weights_only=False` (arbitrary pickle execution) on torch <1.13, with only a silenceable warning. Composes with caller-controlled paths and MD5-only `download_model`. Baseline runners load their own checkpoints with `weights_only=False` outright. *(security BLOCKER+HIGH; predict.py:107-122, baselines/*/run.py)*
+`_torch_load_weights` falls back to `weights_only=False` (arbitrary pickle execution) on torch <1.13, with only a silenceable warning. Composes with caller-controlled paths and MD5-only `download_model`. Baseline runners load their own checkpoints with `weights_only=False` outright. *(security BLOCKER+HIGH; predict.py:107-122, deepcell_types/baselines/*/run.py)*
 
 ### B-4. README contradicts the flagship archive-free-inference feature
 README still says you *must* supply a multi-GB TissueNet zarr before `predict()`; the code ships `vocab.json` and runs without it. First thing a new user reads, and it's wrong. *(docs BLOCKER; README.md:5-6,42-46 vs config.py:236-254)*
+**Current status:** fixed later in PR #41; README now states the archive is optional for `predict()`.
 
 ### B-5. Resume silently loads an incompatible architecture
 `--resume_path` config check validates only `resnet_channels`/`d_model`; `n_heads` (not recoverable from tensor shapes) and `n_celltypes` are unchecked → a mismatched-`n_heads` resume runs to completion with the wrong attention config and no error. *(errors B1; train.py:688-698)*
+**Current status:** fixed later in PR #41 for full checkpoints by validating `n_heads`, `n_celltypes`, and `ct_head_arch`.
 
 ### B-6. Nimbus baseline reports success (exit 0) on fatal failure
-"Nimbus not installed" / "no datasets" / "no predictions" all hit a bare `return` in a Click command → exit 0, no metrics written. A comparison suite records "Nimbus ran" when it never produced a number. *(errors B2; baselines/nimbus/run.py:323-368,596-599)*
+"Nimbus not installed" / "no datasets" / "no predictions" all hit a bare `return` in a Click command → exit 0, no metrics written. A comparison suite records "Nimbus ran" when it never produced a number. *(errors B2; deepcell_types/baselines/nimbus/run.py:323-368,596-599)*
 
 ### B-7. Checkpoint round-trip + fairness contracts are untested
 The round-trip test exercises a `_TinyNet`, not `CellTypeAnnotator`: ct2idx ordering, `compat_marker0_zero`, and `n_heads` have no round-trip test; there is no test that abstention stays DCT-only or that class weights are train-only. The result-critical invariants have no regression guard. *(tests B1/B2/B3)*

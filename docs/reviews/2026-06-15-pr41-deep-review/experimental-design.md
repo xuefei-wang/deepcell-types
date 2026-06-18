@@ -6,11 +6,12 @@
 **Location:** `deepcell_types/training/dataset.py:143-147`, `scripts/train.py:63-83`, `scripts/train.py:450-455`
 `FullImageDataset.ct_counts` is built over every cell (`for idx in self.indices`); `compute_class_weights` reads `dataset.ct_counts` directly. The `Subset` train wrapper narrows iteration but not `ct_counts`, so FocalLoss alpha weights are derived from class frequencies that include val+test. Rare classes concentrated in val/test get over-weighted in the training objective — label-frequency leakage from eval into training.
 **Recommendation:** Compute counts over `train_indices` only and pass an explicit counts dict to `compute_class_weights`.
+**Current status:** fixed later in PR #41; `compute_class_weights` now iterates the explicit `train_indices`.
 
 ## BLOCKER 2: Default config double-weights rare classes — FocalLoss class weights + WeightedRandomSampler both active
 **Location:** `scripts/train.py:290-293`, `:408`, `:615-617`; `deepcell_types/training/dataloader.py:170-182`
 `use_weighted_sampler=True` hardcoded; `--no_class_weights` defaults False, so `focal_alpha = class_weights`. Both paths active by default. Sampler floors counts at 1000; FocalLoss `sqrt(total/count)` has NO floor. Combined inflation ≈ `total/316` instead of intended `sqrt(total/N)`. Baselines (CellSighter plain CE, XGBoost none) don't double-weight → asymmetric comparison. The code's own warning (metrics.py) documents this hazard.
-**Recommendation:** Use `--no_class_weights` when sampler on, OR floor `compute_class_weights` at 1000, OR drop the sampler (maintainer's plan resolves this).
+**Recommendation:** Use `--no_class_weights` when sampler on, OR floor `compute_class_weights` at 1000, OR drop the sampler.
 
 ## BLOCKER 3: Abstention applied only to "ours" — headline macro-F1 comparison is structurally asymmetric
 **Location:** `deepcell_types/abstention.py:86-91`, `scripts/predict.py:446-511`, baseline `run.py`

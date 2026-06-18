@@ -1,12 +1,12 @@
 # Recipe ablation: two-stage `resmlp` vs from-scratch — what buys the headline?
 
-**Date:** 2026-06-16/17 · **Archive:** `expanded-tissuenet.zarr` (fingerprint `f5b6ed52`) · **Test set:** held-out 129 FOVs / 486,705 cells (`fov_split_test_current.json`).
+**Date:** 2026-06-16/17 · **Archive:** `expanded-tissuenet.zarr` (fingerprint `f5b6ed52`) · **Test set:** held-out 129 FOVs / 486,705 cells (`splits/fov_split_test_current.json`).
 
 All cell-type macro-F1 numbers below are computed on the **same frozen test set**, full-coverage (no abstention) unless a `k` is given, using the repo's own `hierarchical_macro_f1` (parent→child credit) and the shared `_conf_mat_summary` reducer — so they are directly comparable across methods.
 
 ## Question
 
-PR #41's headline (`~79.1` full-coverage macro-F1) is produced by the **two-stage `resmlp` recipe**: train a backbone with the weighted sampler on, then *freeze it* and retrain a residual-MLP cell-type head on the natural class distribution (sampler off, plain CE). A natural question for the paper: **is that edge actually due to the two-stage training procedure, or is it confounded by other differences** between the `resmlp` checkpoint and a plain from-scratch model?
+PR #41's flat current-val headline (`~79.1` full-coverage macro-F1) is produced by the **two-stage `resmlp` recipe**: train a backbone with the weighted sampler on, then *freeze it* and retrain a residual-MLP cell-type head on the natural class distribution (sampler off, plain CE). A natural question for the paper: **is that edge actually due to the two-stage training procedure, or is it confounded by other differences** between the `resmlp` checkpoint and a plain from-scratch model?
 
 ## Step 1 — Confound audit (6-agent comparison)
 
@@ -54,7 +54,7 @@ Controlled run full sweep (test, 486,705 cells): raw flat 71.95 / hier 74.96; k=
 
 ## Reproducibility
 
-- **Checkpoints:** two-stage `models/model_dct_resmlp_best.pt`; controlled from-scratch `/tmp/dct_scratch/models/model_dct_scratch_resmlp_best.pt`; original from-scratch `/tmp/dct_scratch/models/model_dct_scratch_nopt_best.pt`. (Backbone shared with `model_dct_{headfix,final_noclsw}_best.pt`, bit-identical.)
-- **Controlled run:** `scripts/train.py --ct_head_arch resmlp --lr 1e-3 --focal_gamma 2.0 --domain_weight 0.1 --no_class_weights --resnet_channels 48 --epochs 50 --patience 10 --max_samples_per_epoch 500000 --max_val_samples 200000 --split_file fov_split_current.json` on archive `f5b6ed52`.
+- **Checkpoints:** run-local artifacts (not committed): two-stage `models/model_dct_resmlp_best.pt`; controlled from-scratch `/tmp/dct_scratch/models/model_dct_scratch_resmlp_best.pt`; original from-scratch `/tmp/dct_scratch/models/model_dct_scratch_nopt_best.pt`. (Backbone shared with `model_dct_{headfix,final_noclsw}_best.pt`, bit-identical.)
+- **Controlled run:** `scripts/train.py --ct_head_arch resmlp --lr 1e-3 --focal_gamma 2.0 --domain_weight 0.1 --no_class_weights --resnet_channels 48 --epochs 50 --patience 10 --max_samples_per_epoch 500000 --max_val_samples 200000 --split_file fov_split_current.json` on archive `f5b6ed52`. The `fov_split_current.json` training split was a run-local current-archive manifest; the committed final-test projection is `splits/fov_split_test_current.json`.
 - **Eval:** `scripts/predict.py --model_path <ckpt> --split_file <test split, val=129 FOVs> --ct_abstention_k 0`, then `hierarchical_macro_f1` over the prediction CSV. Loading a `resmlp` checkpoint requires the head-agnostic cell-type-count inference added in PR #41 (`b598710`).
-- XGBoost test CSVs: `dct-final-ckpt/baseline_xgboost_test_prediction.csv` (tuned) on the bit-identical 129-FOV test set.
+- XGBoost test CSVs: run-local `dct-final-ckpt/baseline_xgboost_test_prediction.csv` (tuned) on the bit-identical 129-FOV test set.

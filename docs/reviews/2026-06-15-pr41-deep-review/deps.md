@@ -11,6 +11,7 @@ No `import tifffile` in `deepcell_types/` or `scripts/`. Comment claims "TIFF-ba
 **Location:** `deepcell_types/preprocessing.py:246`
 `_normalize_per_channel` (live inference path via `PatchDataset.__iter__`) uses `np.ptp`, removed as a free function in NumPy 2.0. `numpy>=1.24` base pin permits 2.x. The identical call was already fixed at line 140 but this one was missed → `pip install deepcell-types` + `predict()` raises `AttributeError` on a fresh env today.
 **Recommendation:** Replace with `np.max(...) - np.min(...)` (the existing fix); consider `numpy>=1.24,<3` or validate 2.x.
+**Current status:** fixed later in PR #41; `_normalize_per_channel` no longer calls `np.ptp`.
 
 ## HIGH: `scikit-image>=0.20` loose lower bound interacts with the np.ptp/NumPy-2 issue
 **Location:** `pyproject.toml:27` — correct to be in base (inference uses `rescale`), but pin hygiene weak.

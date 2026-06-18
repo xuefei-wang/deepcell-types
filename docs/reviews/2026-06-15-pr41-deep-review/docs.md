@@ -6,6 +6,7 @@
 **Location:** `README.md:5-6` and `:42-46` vs `config.py:236-254`, `CHANGELOG.md:22-26`
 README still says you *must* provide a multi-GB TissueNet zarr archive before `predict()`. The code falls back to packaged `vocab.json` (archive-free), which is the headline v0.1.0 feature. A new user reads the README, concludes they can't run inference, and abandons.
 **Recommendation:** Rewrite intro + "TissueNet zarr archive" section to state the archive is optional.
+**Current status:** fixed later in PR #41; README now presents the archive as optional for inference.
 
 ## BLOCKER: `scripts/train.py` docstring says DANN disabled by default; CLI default enables it
 **Location:** `scripts/train.py:11-12` vs `:278-281`

@@ -5,7 +5,7 @@
 ## BLOCKER: Default config double-weights rare classes (sampler + FocalLoss simultaneously)
 **Location:** `scripts/train.py:614-617`, `deepcell_types/training/samplers.py:42-45`, `scripts/train.py:63-83`
 Sampler floors effective count at 1000 (`max(count,1000)`); `compute_class_weights` uses raw `sqrt(total/count)` with NO floor. Both active by default. Net rare-class boost ≈ `total/316` vs intended `sqrt(total/N)`. The code comment says to avoid this, then the default does it. Corrupts class balance; inflates rare-class macro-F1; non-reproducible if a user follows the "use --no_class_weights" advice.
-**Recommendation:** Default `no_class_weights=True`, or add the 1000 floor to `compute_class_weights`, or disable the sampler when class weights on. (Maintainer's sampler removal resolves this.)
+**Recommendation:** Default `no_class_weights=True`, or add the 1000 floor to `compute_class_weights`, or disable the sampler when class weights on.
 
 ## HIGH: CellSighter baseline `scatter_` on CUDA has undefined write order when marker index 0 is present
 **Location:** `deepcell_types/baselines/cellsighter/model.py:107-111`
