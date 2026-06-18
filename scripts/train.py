@@ -33,6 +33,7 @@ from deepcell_types.training.config import (
     WARMUP_PCT,
     CELL_TYPE_HIERARCHY,
 )
+from deepcell_types.training.class_weights import compute_class_weights
 from deepcell_types.training.dataset import (
     create_dataloader,
     AugmentedDataset,
@@ -58,35 +59,6 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", ""))
 
 # Default loss weights for multi-task training
 DEFAULT_LOSS_WEIGHTS = {"ct": 1.0, "domain": 0.0, "marker_pos": 1.0}
-
-
-def compute_class_weights(dct_config, dataset, label_remap, train_indices):
-    """Compute sqrt-inverse-frequency class weights for FocalLoss.
-
-    Counts are taken over the TRAIN indices only — never the whole-archive
-    ``dataset.ct_counts``, which includes val/test cells. Using whole-archive
-    counts leaks evaluation-set label frequencies into the training objective
-    (over-weighting classes concentrated in val/test, under-weighting those
-    concentrated in train). Weights are indexed in compact 0-indexed label space.
-    """
-    ct_counts = defaultdict(int)
-    for i in train_indices:
-        ct_counts[dataset.indices[i].ct_label_standard] += 1
-    total = sum(ct_counts.values())
-    n_classes = len(dct_config.ct2idx)
-
-    weights = torch.ones(n_classes)
-    for ct, idx in dct_config.ct2idx.items():
-        compact_idx = label_remap[idx].item()
-        count = ct_counts.get(ct, 0)
-        if count > 0:
-            weights[compact_idx] = np.sqrt(total / count)
-        else:
-            weights[compact_idx] = 1.0
-
-    # Normalize so mean weight = 1
-    weights = weights / weights.mean()
-    return weights
 
 
 def forward_one_batch(

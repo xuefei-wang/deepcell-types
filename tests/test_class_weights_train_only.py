@@ -2,8 +2,8 @@
 
 Guards the fix that replaced whole-archive ``dataset.ct_counts`` (which
 includes val/test cells) with a train-indices-only count in
-``scripts.train.compute_class_weights``. Counting val/test frequencies leaks
-evaluation-set label distribution into the training objective.
+``compute_class_weights``. Counting val/test frequencies leaks evaluation-set
+label distribution into the training objective.
 """
 
 from types import SimpleNamespace
@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from scripts.train import compute_class_weights
+from deepcell_types.training.class_weights import compute_class_weights
 
 
 def _rec(ct):
@@ -39,7 +39,8 @@ def test_class_weights_use_train_cells_only():
 
     weights = compute_class_weights(dct_config, dataset, label_remap, train_indices)
 
-    # Expected from TRAIN-only counts: A=2, B=1, C=1, D=0 (absent -> 1.0); total=4.
+    # Expected from TRAIN-only counts:
+    # A=2, B=1, C=1, D=0 (absent -> 1.0); total=4.
     raw = np.array([np.sqrt(4 / 2), np.sqrt(4 / 1), np.sqrt(4 / 1), 1.0])
     expected = raw / raw.mean()
     np.testing.assert_allclose(weights.numpy(), expected, rtol=1e-6)
