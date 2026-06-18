@@ -139,11 +139,11 @@ dev = [
 ]
 
 [tool.ruff]
-# maps/ is vendored verbatim from upstream; cellsighter/ is an independent
-# reimplementation (see deepcell_types/baselines/NOTICE). Both are pinned
-# byte-for-byte by tests/baselines/test_maps_cellsighter_equivalence.py
-# (only the `from .model import` relocation rewrite is allowed). Linting them
-# would force edits that break that equivalence contract, so exclude them.
+# maps/ and cellsighter/ are attribution-sensitive baseline implementations
+# (see deepcell_types/baselines/NOTICE) pinned by
+# tests/baselines/test_maps_cellsighter_equivalence.py. That equivalence guard
+# allows only the `from .model import` relocation rewrite; linting these files
+# would force edits that break the contract, so exclude them.
 extend-exclude = [
     "deepcell_types/baselines/maps",
     "deepcell_types/baselines/cellsighter",

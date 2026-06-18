@@ -218,6 +218,32 @@ def test_predict_accepts_archive_backed_canonical_checkpoint_path(tmp_path):
     assert cell_types[0] in config.ct2idx
 
 
+def test_predict_device_num_alias_warns_and_falls_back(tmp_path):
+    archive_path = _make_archive(tmp_path)
+    config = DCTConfig(zarr_path=archive_path)
+    ckpt_path = _build_checkpoint(config, tmp_path)
+
+    raw = np.ones((1, 40, 40), dtype=np.float32)
+    mask = np.zeros((40, 40), dtype=np.int32)
+    mask[12:28, 12:28] = 1
+
+    with pytest.warns(DeprecationWarning, match="device_num"):
+        cell_types = predict(
+            raw,
+            mask,
+            ["CD45"],
+            0.5,
+            model_name=str(ckpt_path),
+            device_num="cpu",
+            batch_size=1,
+            num_workers=0,
+            zarr_path=archive_path,
+        )
+
+    assert len(cell_types) == 1
+    assert cell_types[0] in config.ct2idx
+
+
 def _build_checkpoint(config, tmp_path, **overrides):
     marker_embeddings = np.zeros((len(config.marker2idx), 8), dtype=np.float32)
     model = create_model(
@@ -382,6 +408,17 @@ def test_config_raises_when_explicit_archive_missing(tmp_path, monkeypatch):
     # silent fall-through to the packaged vocab).
     monkeypatch.delenv("DEEPCELL_TYPES_ZARR_PATH", raising=False)
     monkeypatch.delenv("DATA_DIR", raising=False)
+    with pytest.raises(FileNotFoundError, match="zarr archive"):
+        DCTConfig(zarr_path=tmp_path / "does-not-exist.zarr")
+
+
+def test_config_explicit_missing_archive_does_not_fall_through_to_env(
+    tmp_path, monkeypatch
+):
+    archive_path = _make_archive(tmp_path)
+    monkeypatch.setenv("DEEPCELL_TYPES_ZARR_PATH", str(archive_path))
+    monkeypatch.delenv("DATA_DIR", raising=False)
+
     with pytest.raises(FileNotFoundError, match="zarr archive"):
         DCTConfig(zarr_path=tmp_path / "does-not-exist.zarr")
 

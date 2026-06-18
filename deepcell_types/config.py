@@ -23,6 +23,7 @@ def _archive_candidate_paths(explicit_path):
     # contain a candidate archive.
     if explicit_path is not None:
         yield Path(explicit_path).expanduser()
+        return
 
     env_path = os.environ.get(DCTConfig.ARCHIVE_ENV_VAR)
     if env_path:
