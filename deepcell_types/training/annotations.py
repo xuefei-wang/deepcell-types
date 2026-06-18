@@ -175,6 +175,8 @@ def extract_cell_annotations(ds, dataset_key, preproc, include_centroids=False):
                     continue
                 for val in values:
                     if isinstance(val, (int, float)) and not isinstance(val, list):
+                        if not centroids_raw:
+                            continue
                         idx = int(val)
                         int_attempts += 1
                         cent = lookup_centroid(centroids_raw, idx)

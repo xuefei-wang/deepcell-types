@@ -36,6 +36,12 @@ def _dataset_with_source(source):
     return ds, preproc
 
 
+def _dataset_with_source_and_centroids(source, centroids):
+    ds, preproc = _dataset_with_source(source)
+    preproc.attrs["centroids"] = centroids
+    return ds, preproc
+
+
 def test_duplicate_agreeing_labels_collapse_to_one_cell():
     ds, preproc = _dataset_with_source(
         {
@@ -72,4 +78,41 @@ def test_conflicting_duplicate_labels_are_dropped(caplog):
     assert any(
         "dropped 1 cells with conflicting duplicate labels" in rec.getMessage()
         for rec in caplog.records
+    )
+
+
+def test_missing_integer_indices_warn_when_centroids_exist(caplog):
+    ds, preproc = _dataset_with_source(
+        {
+            "CD4T": [1, 2, 999],
+        }
+    )
+
+    with caplog.at_level(logging.WARNING, logger="deepcell_types.training.annotations"):
+        cell_types, cell_indices, _ = extract_cell_annotations(
+            ds, "mock_fov", preproc, include_centroids=True
+        )
+
+    assert cell_types == ["CD4T", "CD4T"]
+    assert cell_indices == [1, 2]
+    assert any(
+        "cell-index match drop for mock_fov: 1/3 (33.3%)" in rec.getMessage()
+        for rec in caplog.records
+    )
+
+
+def test_integer_indices_without_centroids_do_not_warn(caplog):
+    ds, preproc = _dataset_with_source_and_centroids(
+        {
+            "CD4T": [1],
+        },
+        {},
+    )
+
+    with caplog.at_level(logging.WARNING, logger="deepcell_types.training.annotations"):
+        result = extract_cell_annotations(ds, "mock_fov", preproc)
+
+    assert result is None
+    assert not any(
+        "cell-index match drop" in rec.getMessage() for rec in caplog.records
     )
