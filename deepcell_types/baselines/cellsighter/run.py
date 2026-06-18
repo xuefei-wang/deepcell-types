@@ -341,17 +341,19 @@ def main(
         inner_val_ratio=0.1,
     )
     sel_loader = metadata.get("inner_val_loader")
-    if sel_loader is None:
-        # FOV splits are required for a leakage-free inner-val carve.
+    num_inner_val = int(metadata.get("num_inner_val") or 0)
+    if sel_loader is None or num_inner_val <= 0:
+        # FOV splits with at least two train FOVs are required for a
+        # leakage-free inner-val carve.
         raise click.UsageError(
             "CellSighter model selection requires FOV splits (--split_mode fov "
-            "with a --split_file) so an inner-validation set can be carved from "
-            "the training FOVs."
+            "with a --split_file) and at least two training FOVs so an "
+            "inner-validation set can be carved from train."
         )
 
     print(f"Active datasets: {metadata['active_datasets']}")
     print(f"Number of samples: {metadata['num_samples']}")
-    print(f"Inner-val cells (FOV-grouped, for selection): {metadata['num_inner_val']}")
+    print(f"Inner-val cells (FOV-grouped, for selection): {num_inner_val}")
 
     # Create model
     model = CellSighterModel(
@@ -384,7 +386,7 @@ def main(
     # Training loop
     print("\nTraining CellSighter model...")
     # Select on macro-F1 — the headline metric, matching the main model
-    # (scripts/train.py selects on val_macro_f1) and the other baselines. Use
+    # (scripts/train.py selects on val_macro_f1). Use
     # -inf so the first val pass always wins, even if macro_f1 is exactly 0
     # (happens on smoke runs that don't train long enough to predict the majority class).
     best_macro_f1 = float("-inf")

@@ -5,9 +5,9 @@ symbols are re-exported from ``dataset`` for backward compatibility.
 
 Contains ``create_dataloader`` (the full keyword API), the ``DataLoaderConfig``
 dataclass that bundles its 20+ knobs, and ``create_dataloader_from_config``
-(the dataclass-based wrapper). This module sits at the top of the training-data
-dependency chain: it imports the dataset core, transforms, samplers, and split
-helpers, but nothing imports it back.
+(the dataclass-based wrapper). ``FullImageDataset`` is imported lazily inside
+``create_dataloader`` because ``dataset`` re-exports these dataloader helpers
+for backward compatibility.
 """
 
 from dataclasses import dataclass, fields
@@ -17,7 +17,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
-from .dataset import FullImageDataset
 from .samplers import (
     FOVGroupedSampler,
     SequentialFOVGroupedSampler,
@@ -44,16 +43,24 @@ def _carve_inner_val_fovs(dataset, train_indices, inner_val_ratio, inner_val_see
     (``inner_val_ratio`` <= 0 or no train cells), leaving ``train_indices``
     unchanged so the main-model path is unaffected.
     """
-    if not (inner_val_ratio and inner_val_ratio > 0.0 and len(train_indices) > 0):
+    if inner_val_ratio is None:
+        return list(train_indices), None
+    if inner_val_ratio < 0.0 or inner_val_ratio > 1.0:
+        raise ValueError("inner_val_ratio must be in the range [0.0, 1.0]")
+    if not (inner_val_ratio > 0.0 and len(train_indices) > 0):
         return list(train_indices), None
     fov_keys = [
         (dataset.indices[i][6], dataset.indices[i][5]) for i in train_indices
     ]  # (dataset_name, fov_name)
     unique_fovs = sorted(set(fov_keys))
+    if len(unique_fovs) < 2:
+        return list(train_indices), None
     rng_iv = np.random.default_rng(inner_val_seed)
     perm = rng_iv.permutation(len(unique_fovs))
     n_iv = max(1, int(round(len(unique_fovs) * inner_val_ratio)))
     n_iv = min(n_iv, len(unique_fovs) - 1)  # always keep ≥1 inner-train FOV
+    if n_iv <= 0:
+        return list(train_indices), None
     inner_val_fovs = {unique_fovs[p] for p in perm[:n_iv].tolist()}
     inner_train_indices = [
         i for i, k in zip(train_indices, fov_keys) if k not in inner_val_fovs
@@ -157,6 +164,8 @@ def create_dataloader(
 
     # Only use persistent_workers when num_workers > 0
     pw = persistent_workers and num_workers > 0
+
+    from .dataset import FullImageDataset
 
     dataset = FullImageDataset(
         zarr_dir,
@@ -289,7 +298,7 @@ def create_dataloader(
             generator=val_gen,
             worker_init_fn=worker_init_fn,
         )
-        if inner_val_indices is not None:
+        if inner_val_indices:
             inner_val_gen = make_generator(seed + 2)
             inner_val_loader = DataLoader(
                 torch.utils.data.Subset(dataset, inner_val_indices),
@@ -393,6 +402,9 @@ class DataLoaderConfig:
     multiprocessing_context: Optional[Any] = None
     pin_memory: bool = False
     numpy_cache_max_bytes: Optional[int] = None
+    fov_grouped_train: bool = False
+    inner_val_ratio: float = 0.0
+    inner_val_seed: int = 42
 
 
 def create_dataloader_from_config(zarr_dir, dct_config, config: DataLoaderConfig):

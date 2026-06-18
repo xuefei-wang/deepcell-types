@@ -317,10 +317,10 @@ def main(
     # That structurally prevents the model from ever predicting those classes
     # at inference (their probability is identically zero), dragging macro-F1
     # down by 5–10 pp without a corresponding macro_accuracy gain.
-    # Switching to the full sorted-ct2idx space adds a few unused output dims
-    # whose loss gradient is always zero (no positive examples) — no harm,
-    # and the saved ckpt is now a drop-in 51-class head that matches
-    # CellSighter / "ours" predictions schema.
+    # Switching to the full sorted-ct2idx space adds output dims for classes
+    # with no positive train examples. Those classes are still non-target
+    # logits under CrossEntropyLoss, but the saved ckpt is now a drop-in
+    # 51-class head that matches CellSighter / "ours" predictions schema.
     sorted_ct = sorted(dct_config.ct2idx.values())
     label_to_compact = {orig: i for i, orig in enumerate(sorted_ct)}
     compact_to_label = {i: orig for orig, i in label_to_compact.items()}
@@ -334,7 +334,7 @@ def main(
     print(
         f"Output head: {n_classes_compact} classes (of {num_classes} total in ct2idx); "
         f"{n_train_unique} have train cells, {n_classes_compact - n_train_unique} have zero-train-support "
-        f"and will receive no loss gradient."
+        f"and are trained only as non-target logits."
     )
 
     # Carve a FOV-grouped inner-validation set out of the training data for
@@ -345,6 +345,12 @@ def main(
     # stopping. Deviates from canonical mahmoodlab/MAPS trainer.py (which
     # selects on the eval set); documented in baselines/maps/README.
     train_fov_array = np.asarray(train_fov_names)
+    n_train_fovs = len(np.unique(train_fov_array))
+    if n_train_fovs < 2:
+        raise click.UsageError(
+            "MAPS model selection requires at least two training FOVs so a "
+            "FOV-grouped inner-validation set can be carved from train."
+        )
     gss = GroupShuffleSplit(n_splits=1, test_size=0.1, random_state=seed)
     inner_train_idx, inner_val_idx = next(
         gss.split(X_train, y_train, groups=train_fov_array)

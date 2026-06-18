@@ -7,11 +7,17 @@ inner-val, never split, so no cell used to select the checkpoint also trained
 the model.
 """
 
-# Import dataset before dataloader: the two modules have a pre-existing
-# circular import (dataloader imports FullImageDataset; dataset re-exports from
-# dataloader for back-compat), so importing dataloader first raises ImportError.
+import inspect
+from dataclasses import fields
+
+import pytest
+
+from deepcell_types.training.dataloader import (
+    DataLoaderConfig,
+    _carve_inner_val_fovs,
+    create_dataloader,
+)
 from deepcell_types.training.dataset import CellIndexRecord
-from deepcell_types.training.dataloader import _carve_inner_val_fovs
 
 
 class _MockDataset:
@@ -71,6 +77,25 @@ def test_inner_val_carve_noop_when_ratio_zero():
     assert out_train == train_indices
 
 
+def test_inner_val_carve_noop_with_one_train_fov():
+    dataset = _dataset_with_fovs(n_fovs=1, cells_per_fov=3)
+    train_indices = list(range(len(dataset.indices)))
+
+    out_train, out_val = _carve_inner_val_fovs(dataset, train_indices, 0.1, 42)
+
+    assert out_val is None
+    assert out_train == train_indices
+
+
+@pytest.mark.parametrize("ratio", [-0.1, 1.1])
+def test_inner_val_carve_rejects_invalid_ratio(ratio):
+    dataset = _dataset_with_fovs()
+    train_indices = list(range(len(dataset.indices)))
+
+    with pytest.raises(ValueError, match="inner_val_ratio"):
+        _carve_inner_val_fovs(dataset, train_indices, ratio, 42)
+
+
 def test_inner_val_carve_keeps_at_least_one_inner_train_fov():
     dataset = _dataset_with_fovs(n_fovs=2, cells_per_fov=2)
     train_indices = list(range(len(dataset.indices)))
@@ -80,3 +105,10 @@ def test_inner_val_carve_keeps_at_least_one_inner_train_fov():
 
     assert len(_fovs(dataset, inner_train)) >= 1
     assert _fovs(dataset, inner_train).isdisjoint(_fovs(dataset, inner_val))
+
+
+def test_dataloader_config_mirrors_create_dataloader_kwargs():
+    params = list(inspect.signature(create_dataloader).parameters)
+    config_fields = [f.name for f in fields(DataLoaderConfig)]
+
+    assert config_fields == params[2:]

@@ -52,5 +52,5 @@ python -m deepcell_types.baselines cellsighter ...
     XGBoost baseline's FOV-grouped early-stopping set. As a consequence the
     model now trains on ~90% of the training cells (the inner-val FOVs are held
     out). Selection uses macro-F1 — the headline metric, matching the main
-    model (`scripts/train.py` selects on `val_macro_f1`) and the other
-    baselines; upstream CellSighter selected on macro-accuracy.
+    model (`scripts/train.py` selects on `val_macro_f1`); upstream CellSighter
+    selected on macro-accuracy.
