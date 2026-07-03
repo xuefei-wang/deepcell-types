@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Model and Datasets &#8212; deepcell-types</title>
+    <title>Reference &#8212; deepcell-types</title>
   
   
   
@@ -42,12 +42,12 @@
     <script src="../_static/documentation_options.js?v=01f34227"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'site/API-key';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'site/reference';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Reference" href="reference.html" />
-    <link rel="prev" title="Tutorial" href="tutorial.html" />
+    <link rel="next" title="deepcell_types.predict" href="_generated/deepcell_types.predict.html" />
+    <link rel="prev" title="Model and Datasets" href="API-key.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -139,15 +139,15 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="API-key.html">
     Model and Datasets
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="reference.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     Reference
   </a>
 </li>
@@ -254,15 +254,15 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="API-key.html">
     Model and Datasets
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="reference.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     Reference
   </a>
 </li>
@@ -323,7 +323,26 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"></div>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.predict.html">deepcell_types.predict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.PredictionResult.html">deepcell_types.PredictionResult</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.DCTConfig.html">deepcell_types.DCTConfig</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.preprocess_fov.html">deepcell_types.preprocess_fov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.PreprocessedFov.html">deepcell_types.PreprocessedFov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.make_preprocessor.html">deepcell_types.make_preprocessor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.apply_config.html">deepcell_types.apply_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.DEFAULT_CONFIG.html">deepcell_types.DEFAULT_CONFIG</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.abstention.compute_iqr_fence.html">deepcell_types.abstention.compute_iqr_fence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.abstention.ABSTENTION_LABEL.html">deepcell_types.abstention.ABSTENTION_LABEL</a></li>
+</ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.utils.download_model.html">deepcell_types.utils.download_model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.utils.download_baseline_checkpoint.html">deepcell_types.utils.download_baseline_checkpoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/deepcell_types.utils.download_training_data.html">deepcell_types.utils.download_training_data</a></li>
+</ul>
+</div>
 </nav></div>
     </div>
   
@@ -362,7 +381,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Model and Datasets</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Reference</span></li>
   </ul>
 </nav>
 </div>
@@ -379,55 +398,69 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="model-and-datasets">
-<h1>Model and Datasets<a class="headerlink" href="#model-and-datasets" title="Link to this heading">#</a></h1>
-<p>DeepCell models and training datasets are licensed under a
-<a class="reference external" href="https://github.com/vanvalenlab/deepcell-auth/blob/main/ASSET_LICENSE">modified Apache license</a> for non-commercial academic use only.
-An API key for accessing datasets and models can be obtained at <a class="reference external" href="https://users.deepcell.org/login/">https://users.deepcell.org/login/</a>.</p>
-<section id="api-key-usage">
-<h2>API Key Usage<a class="headerlink" href="#api-key-usage" title="Link to this heading">#</a></h2>
-<p>The token that is issued by <a class="reference external" href="https://users.deepcell.org">https://users.deepcell.org</a> should be added as an
-environment variable:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">DEEPCELL_ACCESS_TOKEN</span><span class="o">=</span>&lt;token-from-users.deepcell.org&gt;
-</pre></div>
-</div>
-<p>This line can be added to your shell configuration (e.g. <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>, <code class="docutils literal notranslate"><span class="pre">.zshrc</span></code>,
-<code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code>, etc.) to automatically grant access to DeepCell models/data
-upon login.</p>
-</section>
-<section id="models">
-<span id="download-models"></span><h2>Models<a class="headerlink" href="#models" title="Link to this heading">#</a></h2>
-<p>The model can be downloaded for local use:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">deepcell_types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_model</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">download_model</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>A specific version can be requested:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">download_model</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;2026-06-15&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>A listing of available pre-trained model versions is available from
-<code class="docutils literal notranslate"><span class="pre">deepcell_types.utils.list_model_versions()</span></code>.</p>
-<p>To fetch a baseline checkpoint instead of the main DeepCellTypes model:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deepcell_types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_baseline_checkpoint</span>
-
-<span class="c1"># One of: &quot;cellsighter&quot;, &quot;maps&quot;, &quot;nimbus&quot;, &quot;xgboost&quot;</span>
-<span class="n">download_baseline_checkpoint</span><span class="p">(</span><span class="s2">&quot;maps&quot;</span><span class="p">)</span>
-</pre></div>
+  <section id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Link to this heading">#</a></h1>
+<section id="inference">
+<h2>Inference<a class="headerlink" href="#inference" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.predict.html#deepcell_types.predict" title="deepcell_types.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a>(raw, mask, channel_names, mpp, *, ...)</p></td>
+<td><p>Run the cell-type prediction pipeline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.PredictionResult.html#deepcell_types.PredictionResult" title="deepcell_types.PredictionResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PredictionResult</span></code></a>(cell_types, probabilities, ...)</p></td>
+<td><p>Structured <code class="docutils literal notranslate"><span class="pre">predict()</span></code> output when <code class="docutils literal notranslate"><span class="pre">return_probabilities=True</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.DCTConfig.html#deepcell_types.DCTConfig" title="deepcell_types.DCTConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DCTConfig</span></code></a>([zarr_path])</p></td>
+<td><p>Inference-time configuration for <code class="docutils literal notranslate"><span class="pre">deepcell_types.predict</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.preprocess_fov.html#deepcell_types.preprocess_fov" title="deepcell_types.preprocess_fov"><code class="xref py py-obj docutils literal notranslate"><span class="pre">preprocess_fov</span></code></a>(raw, mask, *, native_mpp, ...)</p></td>
+<td><p>Canonical preprocessing for a single FOV.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.PreprocessedFov.html#deepcell_types.PreprocessedFov" title="deepcell_types.PreprocessedFov"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PreprocessedFov</span></code></a>(raw, mask, centroids, ...[, ...])</p></td>
+<td><p>Result of <code class="docutils literal notranslate"><span class="pre">preprocess_fov</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.make_preprocessor.html#deepcell_types.make_preprocessor" title="deepcell_types.make_preprocessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_preprocessor</span></code></a>(config)</p></td>
+<td><p>Return a <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> hook for <code class="docutils literal notranslate"><span class="pre">deepcell_types.predict</span></code> from a config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.apply_config.html#deepcell_types.apply_config" title="deepcell_types.apply_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_config</span></code></a>(raw, channel_names, config)</p></td>
+<td><p>Apply a bounded op pipeline to <code class="docutils literal notranslate"><span class="pre">raw</span></code> (C,H,W) -&gt; (C,H,W) float32.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.DEFAULT_CONFIG.html#deepcell_types.DEFAULT_CONFIG" title="deepcell_types.DEFAULT_CONFIG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_CONFIG</span></code></a></p></td>
+<td><p>Built-in mutable sequence.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
-<section id="training-data">
-<h2>Training Data<a class="headerlink" href="#training-data" title="Link to this heading">#</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The training dataset is over 1.3 TB - make sure you have space and sufficient
-network bandwidth before attempting to download.</p>
+<section id="abstention">
+<h2>Abstention<a class="headerlink" href="#abstention" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.abstention.compute_iqr_fence.html#deepcell_types.abstention.compute_iqr_fence" title="deepcell_types.abstention.compute_iqr_fence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_iqr_fence</span></code></a>(max_softmax, k)</p></td>
+<td><p>Compute the Tukey lower fence <code class="docutils literal notranslate"><span class="pre">Q1</span> <span class="pre">-</span> <span class="pre">k</span> <span class="pre">*</span> <span class="pre">IQR</span></code> for a 1D array.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.abstention.ABSTENTION_LABEL.html#deepcell_types.abstention.ABSTENTION_LABEL" title="deepcell_types.abstention.ABSTENTION_LABEL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ABSTENTION_LABEL</span></code></a></p></td>
+<td><p>Sentinel cell-type name used for cells flagged as abstained.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Similarly, training data can be downloaded for local use with:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">deepcell_types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_training_data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">download_training_data</span><span class="p">()</span>
-</pre></div>
+</section>
+<section id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.utils.download_model.html#deepcell_types.utils.download_model" title="deepcell_types.utils.download_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_model</span></code></a>(*[, version])</p></td>
+<td><p>Download the deepcell-types model checkpoint for local use.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_generated/deepcell_types.utils.download_baseline_checkpoint.html#deepcell_types.utils.download_baseline_checkpoint" title="deepcell_types.utils.download_baseline_checkpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_baseline_checkpoint</span></code></a>(name)</p></td>
+<td><p>Download a baseline-model checkpoint (and any companion files).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="_generated/deepcell_types.utils.download_training_data.html#deepcell_types.utils.download_training_data" title="deepcell_types.utils.download_training_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_training_data</span></code></a>(*[, extract])</p></td>
+<td><p>Download the public training-data corpus for deepcell-types (v1.1).</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
 </section>
@@ -443,20 +476,20 @@ network bandwidth before attempting to download.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="tutorial.html"
+       href="API-key.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Tutorial</p>
+        <p class="prev-next-title">Model and Datasets</p>
       </div>
     </a>
     <a class="right-next"
-       href="reference.html"
+       href="_generated/deepcell_types.predict.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Reference</p>
+        <p class="prev-next-title">deepcell_types.predict</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -479,16 +512,16 @@ network bandwidth before attempting to download.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-key-usage">API Key Usage</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#models">Models</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data">Training Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inference">Inference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#abstention">Abstention</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#utilities">Utilities</a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../_sources/site/API-key.md.txt">
+    <a href="../_sources/site/reference.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
