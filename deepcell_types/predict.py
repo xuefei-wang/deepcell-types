@@ -332,7 +332,6 @@ def predict(
     *,
     model_name,
     device=None,
-    device_num=None,
     batch_size=256,
     num_workers=0,
     zarr_path=None,
@@ -370,9 +369,6 @@ def predict(
         Which device to run inference on, e.g. ``"cpu"``, ``"cuda"``, or
         ``"cuda:0"`` to select a specific GPU. All arguments after `mpp` are
         keyword-only.
-    device_num : `torch.device` or `str`, optional
-        Deprecated alias for `device`, retained for backward compatibility. If
-        both are given, `device` takes precedence.
     batch_size : int, default=256
         Batch size to be used for inference. Larger `batch_size` will increase
         performance by increasing VRAM usage. Default value of 256 is conservative
@@ -435,14 +431,6 @@ def predict(
 
     from .dataset import PatchDataset
 
-    if device_num is not None:
-        warnings.warn(
-            "predict(device_num=...) is deprecated; use device=... instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    if device is None:
-        device = device_num
     if device is None:
         raise TypeError(
             "predict() requires a device, e.g. device='cpu' or device='cuda:0'."
