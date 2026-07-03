@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>deepcell_types.apply_config &#8212; deepcell-types</title>
+    <title>deepcell_types.utils.list_model_versions &#8212; deepcell-types</title>
   
   
   
@@ -42,12 +42,12 @@
     <script src="../../_static/documentation_options.js?v=01f34227"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'site/_generated/deepcell_types.apply_config';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'site/_generated/deepcell_types.utils.list_model_versions';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="deepcell_types.DEFAULT_CONFIG" href="deepcell_types.DEFAULT_CONFIG.html" />
-    <link rel="prev" title="deepcell_types.make_preprocessor" href="deepcell_types.make_preprocessor.html" />
+    <link rel="next" title="deepcell_types.utils.list_baseline_names" href="deepcell_types.utils.list_baseline_names.html" />
+    <link rel="prev" title="deepcell_types.utils.download_training_data" href="deepcell_types.utils.download_training_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -323,25 +323,25 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.predict.html">deepcell_types.predict</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.PredictionResult.html">deepcell_types.PredictionResult</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.DCTConfig.html">deepcell_types.DCTConfig</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.preprocess_fov.html">deepcell_types.preprocess_fov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.PreprocessedFov.html">deepcell_types.PreprocessedFov</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.make_preprocessor.html">deepcell_types.make_preprocessor</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">deepcell_types.apply_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deepcell_types.apply_config.html">deepcell_types.apply_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.DEFAULT_CONFIG.html">deepcell_types.DEFAULT_CONFIG</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.abstention.compute_iqr_fence.html">deepcell_types.abstention.compute_iqr_fence</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.abstention.ABSTENTION_LABEL.html">deepcell_types.abstention.ABSTENTION_LABEL</a></li>
 </ul>
-<ul class="nav bd-sidenav">
+<ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.download_model.html">deepcell_types.utils.download_model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.download_baseline_checkpoint.html">deepcell_types.utils.download_baseline_checkpoint</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.download_training_data.html">deepcell_types.utils.download_training_data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.list_model_versions.html">deepcell_types.utils.list_model_versions</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">deepcell_types.utils.list_model_versions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.list_baseline_names.html">deepcell_types.utils.list_baseline_names</a></li>
 </ul>
 </div>
@@ -386,7 +386,7 @@
     
     <li class="breadcrumb-item"><a href="../reference.html" class="nav-link">Reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">deepcell_types.apply_config</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">deepcell_types.utils.list_model_versions</span></li>
   </ul>
 </nav>
 </div>
@@ -403,14 +403,22 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="deepcell-types-apply-config">
-<h1>deepcell_types.apply_config<a class="headerlink" href="#deepcell-types-apply-config" title="Link to this heading">#</a></h1>
+  <section id="deepcell-types-utils-list-model-versions">
+<h1>deepcell_types.utils.list_model_versions<a class="headerlink" href="#deepcell-types-utils-list-model-versions" title="Link to this heading">#</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="deepcell_types.apply_config">
-<span class="sig-prename descclassname"><span class="pre">deepcell_types.</span></span><span class="sig-name descname"><span class="pre">apply_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#deepcell_types.apply_config" title="Link to this definition">#</a></dt>
-<dd><p>Apply a bounded op pipeline to <code class="docutils literal notranslate"><span class="pre">raw</span></code> (C,H,W) -&gt; (C,H,W) float32.</p>
-<p><code class="docutils literal notranslate"><span class="pre">channel_names</span></code> are the resolved standard marker names aligned to <code class="docutils literal notranslate"><span class="pre">raw</span></code>’s
-channels (what the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> hook receives from <code class="docutils literal notranslate"><span class="pre">predict</span></code>).</p>
+<dt class="sig sig-object py" id="deepcell_types.utils.list_model_versions">
+<span class="sig-prename descclassname"><span class="pre">deepcell_types.utils.</span></span><span class="sig-name descname"><span class="pre">list_model_versions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#deepcell_types.utils.list_model_versions" title="Link to this definition">#</a></dt>
+<dd><p>Return the available pre-trained model versions, newest first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>list of str</dt><dd><p>Version identifiers accepted by <a class="reference internal" href="deepcell_types.utils.download_model.html#deepcell_types.utils.download_model" title="deepcell_types.utils.download_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_model()</span></code></a>. The first
+element is always the default (<code class="docutils literal notranslate"><span class="pre">_latest</span></code>) version that
+<code class="docutils literal notranslate"><span class="pre">download_model()</span></code> resolves to with no argument.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -426,20 +434,20 @@ channels (what the <code class="docutils literal notranslate"><span class="pre">
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="deepcell_types.make_preprocessor.html"
+       href="deepcell_types.utils.download_training_data.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">deepcell_types.make_preprocessor</p>
+        <p class="prev-next-title">deepcell_types.utils.download_training_data</p>
       </div>
     </a>
     <a class="right-next"
-       href="deepcell_types.DEFAULT_CONFIG.html"
+       href="deepcell_types.utils.list_baseline_names.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">deepcell_types.DEFAULT_CONFIG</p>
+        <p class="prev-next-title">deepcell_types.utils.list_baseline_names</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -462,14 +470,14 @@ channels (what the <code class="docutils literal notranslate"><span class="pre">
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepcell_types.apply_config"><code class="docutils literal notranslate"><span class="pre">apply_config()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#deepcell_types.utils.list_model_versions"><code class="docutils literal notranslate"><span class="pre">list_model_versions()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="../../_sources/site/_generated/deepcell_types.apply_config.rst.txt">
+    <a href="../../_sources/site/_generated/deepcell_types.utils.list_model_versions.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

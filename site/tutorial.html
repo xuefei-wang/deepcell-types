@@ -412,7 +412,7 @@ installed.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">zarr</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">zarr</span>
 
 <span class="k">if</span> <span class="ow">not</span> <span class="n">zarr</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">):</span>
     <span class="k">raise</span> <span class="ne">EnvironmentError</span><span class="p">(</span>
@@ -426,7 +426,7 @@ installed.</p>
 <h3>Exploring the archive<a class="headerlink" href="#exploring-the-archive" title="Link to this heading">#</a></h3>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">z</span> <span class="o">=</span> <span class="n">zarr</span><span class="o">.</span><span class="n">open_group</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">z</span> <span class="o">=</span> <span class="n">zarr</span><span class="o">.</span><span class="n">open_group</span><span class="p">(</span>
     <span class="n">store</span><span class="o">=</span><span class="s2">&quot;s3://deepcelltypes-demo-datasets/hubmap.zarr&quot;</span><span class="p">,</span>
     <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span>
     <span class="n">storage_options</span><span class="o">=</span><span class="p">{</span>
@@ -441,15 +441,34 @@ installed.</p>
 <p>High-level structure of the data archive:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">z</span><span class="o">.</span><span class="n">tree</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">z</span><span class="o">.</span><span class="n">tree</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><b>/</b>
+├── <b>HBM267_BZKT_867</b>
+│   ├── <b>image</b> (19, 9072, 9408) uint16
+│   └── <b>segmentations</b>
+│       ├── <b>cellsam</b> (9072, 9408) uint32
+│       └── <b>torch_mesmer</b> (9072, 9408) uint32
+├── <b>HBM685_PCCJ_427</b>
+│   ├── <b>image</b> (54, 9510, 9993) uint16
+│   └── <b>segmentations</b>
+│       ├── <b>cellsam</b> (9510, 9993) uint32
+│       └── <b>torch_mesmer</b> (9510, 9993) uint32
+└── <b>HBM994_PDJN_987</b>
+    ├── <b>image</b> (37, 2048, 2048) int16
+    └── <b>segmentations</b>
+        ├── <b>cellsam</b> (2048, 2048) uint32
+        └── <b>torch_mesmer</b> (2048, 2048) uint32
+</pre>
+</div></div>
 </div>
 <p>A more detailed look at the datasets:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>  <span class="c1"># for nice html rendering</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>  <span class="c1"># for nice html rendering</span>
 
 <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
     <span class="p">{</span><span class="n">k</span><span class="p">:</span>
@@ -468,12 +487,62 @@ installed.</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>tissue</th>
+      <th>technology</th>
+      <th>Num ch.</th>
+      <th>shape</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>HBM267_BZKT_867</th>
+      <td>spleen</td>
+      <td>codex</td>
+      <td>19</td>
+      <td>(9072, 9408)</td>
+    </tr>
+    <tr>
+      <th>HBM685_PCCJ_427</th>
+      <td>intestine</td>
+      <td>codex</td>
+      <td>54</td>
+      <td>(9510, 9993)</td>
+    </tr>
+    <tr>
+      <th>HBM994_PDJN_987</th>
+      <td>uterus</td>
+      <td>mibi</td>
+      <td>37</td>
+      <td>(2048, 2048)</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
 </div>
 <p>In the interest of minimizing network bandwidth, we’ll use the <code class="docutils literal notranslate"><span class="pre">HBM994_PDJN_987</span></code>
 dataset to demonstrate the deepcell-types inference pipeline.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">k</span> <span class="o">=</span> <span class="s2">&quot;HBM994_PDJN_987&quot;</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">k</span> <span class="o">=</span> <span class="s2">&quot;HBM994_PDJN_987&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -489,13 +558,18 @@ Note that these two inputs are derived directly from the corresponding datasets
 on the HuBMAP data portal.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">][:]</span>  <span class="c1"># Load data into memory</span>
 <span class="n">chnames</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channels&quot;</span><span class="p">)</span>
 
 <span class="c1"># Sanity check: ensure that channel name list is the same size as the number of</span>
 <span class="c1"># channels in the image</span>
 <span class="nb">len</span><span class="p">(</span><span class="n">chnames</span><span class="p">)</span> <span class="o">==</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>True
 </pre></div>
 </div>
 </div>
@@ -507,8 +581,13 @@ variability in image scaling.
 This information is stored in the dataset metadata.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mpp</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;mpp&quot;</span><span class="p">]</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mpp</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;mpp&quot;</span><span class="p">]</span>
 <span class="n">mpp</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0.6
 </pre></div>
 </div>
 </div>
@@ -541,7 +620,7 @@ models to construct a full cell-type inference pipeline.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cellSAM.cellsam_pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">cellsam_pipeline</span>
 </pre></div>
 </div>
@@ -560,7 +639,7 @@ for convenience.</p>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract channels for segmentation</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract channels for segmentation</span>
 <span class="n">nuc</span><span class="p">,</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;nuclear_channel&quot;</span><span class="p">],</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;membrane_channel&quot;</span><span class="p">]</span>
 <span class="n">im</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
     <span class="p">[</span><span class="n">img</span><span class="p">[</span><span class="n">chnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">nuc</span><span class="p">)],</span> <span class="n">img</span><span class="p">[</span><span class="n">chnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">mem</span><span class="p">)]],</span>
@@ -574,7 +653,7 @@ for convenience.</p>
 See the <a class="reference external" href="https://vanvalenlab.github.io/cellSAM/reference/generated/cellSAM.cellsam_pipeline.cellsam_pipeline.html">cellsam docs</a> for details.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Format for cellsam</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Format for cellsam</span>
 <span class="n">seg_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="o">*</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">im</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 <span class="n">seg_img</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">im</span>
 </pre></div>
@@ -583,8 +662,8 @@ See the <a class="reference external" href="https://vanvalenlab.github.io/cellSA
 </div>
 <p>Finally, run the segmentation pipeline:</p>
 <div class="cell tag_hide-output docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mask</span> <span class="o">=</span> <span class="n">cellsam_pipeline</span><span class="p">(</span>
+<div class="cell_input above-output-prompt docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mask</span> <span class="o">=</span> <span class="n">cellsam_pipeline</span><span class="p">(</span>
     <span class="n">seg_img</span><span class="p">,</span>
     <span class="n">block_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
     <span class="n">low_contrast_enhancement</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -594,12 +673,98 @@ See the <a class="reference external" href="https://vanvalenlab.github.io/cellSA
 </pre></div>
 </div>
 </div>
+<details class="admonition hide below-input">
+<summary aria-label="Toggle hidden content">
+<p class="collapsed admonition-title">Show code cell output</p>
+<p class="expanded admonition-title">Hide code cell output</p>
+</summary>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/data/xwang3/.cache/dct-docs-venv/lib/python3.12/site-packages/torch/cuda/__init__.py:1054: UserWarning: Can&#39;t initialize NVML
+  uuids = _raw_device_uuid_nvml()
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Total blocks: 16
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>0it [00:00, ?it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>1it [00:01,  1.96s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2it [00:03,  1.51s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>3it [00:04,  1.55s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>4it [00:06,  1.48s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>5it [00:07,  1.40s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>6it [00:08,  1.44s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>7it [00:10,  1.61s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>8it [00:12,  1.56s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>9it [00:13,  1.41s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>10it [00:14,  1.40s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>11it [00:16,  1.46s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>12it [00:17,  1.50s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>13it [00:19,  1.47s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>14it [00:20,  1.38s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>15it [00:21,  1.35s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>16it [00:23,  1.32s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>16it [00:23,  1.44s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>  0%|          | 0/24 [00:00&lt;?, ?it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>100%|██████████| 24/24 [00:00&lt;00:00, 393.77it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</details>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sanity check: the segmentation mask should have the same H, W dimensions as</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sanity check: the segmentation mask should have the same H, W dimensions as</span>
 <span class="c1"># the input image</span>
 <span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>True
 </pre></div>
 </div>
 </div>
@@ -608,7 +773,7 @@ See the <a class="reference external" href="https://vanvalenlab.github.io/cellSA
 (represented as a label image) is sequential.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">skimage</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">skimage</span>
 
 <span class="n">mask</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">segmentation</span><span class="o">.</span><span class="n">relabel_sequential</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
 <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
@@ -625,9 +790,9 @@ See the <a class="reference external" href="https://vanvalenlab.github.io/cellSA
 strongly recommended to run tutorials locally to leverage <code class="docutils literal notranslate"><span class="pre">napari</span></code> for interactive
 visualization.</p>
 </div>
-<div class="cell docutils container">
+<div class="cell tag_skip-execution docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">napari</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">napari</span>
 <span class="n">nim</span> <span class="o">=</span> <span class="n">napari</span><span class="o">.</span><span class="n">Viewer</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># show=False for headless runs (screenshots may be blank)</span>
 
 <span class="c1"># Compute contrast limits</span>
@@ -643,14 +808,14 @@ visualization.</p>
 </div>
 </div>
 </div>
-<div class="cell tag_hide-cell docutils container">
+<div class="cell tag_hide-cell tag_skip-execution docutils container">
 <details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
 <p class="collapsed admonition-title">Show code cell content</p>
 <p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For static rendering - can safely be ignored if running notebook interactively</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># For static rendering - can safely be ignored if running notebook interactively</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">screenshot_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../_static/_generated&quot;</span><span class="p">)</span>
@@ -676,7 +841,7 @@ visualization.</p>
 <p>We now have all the necessary components to run the cell-type inference pipeline.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">deepcell_types</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">deepcell_types</span>
 </pre></div>
 </div>
 </div>
@@ -688,7 +853,7 @@ and returns the local path (it requires a <code class="docutils literal notransl
 straight to <code class="docutils literal notranslate"><span class="pre">predict</span></code> as <code class="docutils literal notranslate"><span class="pre">model_name</span></code>.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deepcell_types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_model</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">deepcell_types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_model</span>
 
 <span class="c1"># Downloads to $HOME/.deepcell/models on first call; subsequent calls reuse</span>
 <span class="c1"># the cached checkpoint and return its path immediately.</span>
@@ -699,7 +864,7 @@ straight to <code class="docutils literal notranslate"><span class="pre">predict
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># System-specific configuration</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># System-specific configuration</span>
 
 <span class="c1"># NOTE: if you do not have a cuda-capable GPU, try &quot;cpu&quot;</span>
 <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda:0&quot;</span>
@@ -719,8 +884,8 @@ must define the same standardized marker and cell-type registry the
 checkpoint was trained against.</p>
 <p>With the system all configured, we can now run the pipeline:</p>
 <div class="cell tag_hide-output docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cell_types</span> <span class="o">=</span> <span class="n">deepcell_types</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+<div class="cell_input above-output-prompt docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cell_types</span> <span class="o">=</span> <span class="n">deepcell_types</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
     <span class="n">img</span><span class="p">,</span>
     <span class="n">mask</span><span class="p">,</span>
     <span class="n">chnames</span><span class="p">,</span>
@@ -732,6 +897,43 @@ checkpoint was trained against.</p>
 </pre></div>
 </div>
 </div>
+<details class="admonition hide below-input">
+<summary aria-label="Toggle hidden content">
+<p class="collapsed admonition-title">Show code cell output</p>
+<p class="expanded admonition-title">Hide code cell output</p>
+</summary>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/data/xwang3/.cache/dct-docs-venv/lib/python3.12/site-packages/torch/cuda/__init__.py:1054: UserWarning: Can&#39;t initialize NVML
+  uuids = _raw_device_uuid_nvml()
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/data/xwang3/Projects/deepcell-types/deepcell_types/predict.py:443: UserWarning: 5 of 37 input channels were masked out; prediction uses the remaining 32 marker(s). Masked: ECAD (not in the marker registry); GRB (not in the marker registry); H3 (not in the marker registry); HLAG (not in the marker registry); VIM (not in the marker registry).
+  dataset = PatchDataset(
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference):   0%|          | 0/7 [00:00&lt;?, ?it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference):  14%|█▍        | 1/7 [00:12&lt;01:16, 12.69s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference):  43%|████▎     | 3/7 [00:12&lt;00:13,  3.34s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference):  71%|███████▏  | 5/7 [00:12&lt;00:03,  1.66s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference): 100%|██████████| 7/7 [00:13&lt;00:00,  1.01it/s]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>(inference): 100%|██████████| 7/7 [00:13&lt;00:00,  1.89s/it]
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</details>
 </div>
 <p>Predictions are provided in the form of list of strings, where the order of
 the list is given by the ascending order of cell indices in the segmentation
@@ -760,7 +962,7 @@ with the full per-cell softmax matrix, the cell indices, a boolean
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">idx_to_pred</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">cell_types</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">idx_to_pred</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">cell_types</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>  <span class="c1"># For nice table rendering</span>
     <span class="n">idx_to_pred</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Cell type&quot;</span><span class="p">]</span>
@@ -768,12 +970,83 @@ with the full per-cell softmax matrix, the cell indices, a boolean
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Cell type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>SmoothMuscle</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Fibroblast</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>EVT</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>SmoothMuscle</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>EVT</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1739</th>
+      <td>NK</td>
+    </tr>
+    <tr>
+      <th>1740</th>
+      <td>NK</td>
+    </tr>
+    <tr>
+      <th>1741</th>
+      <td>EVT</td>
+    </tr>
+    <tr>
+      <th>1742</th>
+      <td>NK</td>
+    </tr>
+    <tr>
+      <th>1743</th>
+      <td>Fibroblast</td>
+    </tr>
+  </tbody>
+</table>
+<p>1743 rows × 1 columns</p>
+</div></div></div>
 </div>
 <p>Depending on the subsequent analysis you wish to perform, it may be convenient
 to group the cells by their predicted cell-type:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
 
 <span class="c1"># Convert the 1-1 `cell: type` mapping to a 1-many `type: list-of-cells` mapping</span>
 <span class="n">labels_by_celltype</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
@@ -786,7 +1059,7 @@ to group the cells by their predicted cell-type:</p>
 <p>Here’s the distribution of predicted cell types for this tissue:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total number of cells: </span><span class="si">{</span><span class="p">(</span><span class="n">num_cells</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">mask</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -800,6 +1073,22 @@ to group the cells by their predicted cell-type:</p>
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Total number of cells: 1743
+{&#39;SmoothMuscle&#39;: &#39;219 (12.56%)&#39;,
+ &#39;Fibroblast&#39;: &#39;450 (25.82%)&#39;,
+ &#39;EVT&#39;: &#39;295 (16.92%)&#39;,
+ &#39;Macrophage&#39;: &#39;264 (15.15%)&#39;,
+ &#39;NK&#39;: &#39;360 (20.65%)&#39;,
+ &#39;Epithelial&#39;: &#39;92 (5.28%)&#39;,
+ &#39;Endothelial&#39;: &#39;39 (2.24%)&#39;,
+ &#39;CD4T&#39;: &#39;12 (0.69%)&#39;,
+ &#39;NKT&#39;: &#39;2 (0.11%)&#39;,
+ &#39;CD8T&#39;: &#39;9 (0.52%)&#39;,
+ &#39;Mast&#39;: &#39;1 (0.06%)&#39;}
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="visualizing-the-results">
@@ -809,9 +1098,9 @@ advantages and disadvantages.
 One way is to add an independent layer for each predicted cell type.
 The advantage of this approach is that individual layers can be toggled to focus
 on a particular cell type during interactive visualization.</p>
-<div class="cell docutils container">
+<div class="cell tag_skip-execution docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Regionprops to extract slices corresponding to each individual cell mask</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Regionprops to extract slices corresponding to each individual cell mask</span>
 <span class="n">props</span> <span class="o">=</span> <span class="n">skimage</span><span class="o">.</span><span class="n">measure</span><span class="o">.</span><span class="n">regionprops</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
 <span class="n">prop_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">props</span><span class="p">}</span>
 
@@ -830,14 +1119,14 @@ on a particular cell type during interactive visualization.</p>
 </div>
 </div>
 </div>
-<div class="cell tag_hide-cell docutils container">
+<div class="cell tag_hide-cell tag_skip-execution docutils container">
 <details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
 <p class="collapsed admonition-title">Show code cell content</p>
 <p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For static rendering - can safely be ignored if running notebook interactively</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># For static rendering - can safely be ignored if running notebook interactively</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">screenshot_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;../_static/_generated&quot;</span><span class="p">)</span>

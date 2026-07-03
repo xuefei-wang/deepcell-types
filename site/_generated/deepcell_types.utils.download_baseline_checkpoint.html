@@ -341,6 +341,8 @@
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.download_model.html">deepcell_types.utils.download_model</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">deepcell_types.utils.download_baseline_checkpoint</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.download_training_data.html">deepcell_types.utils.download_training_data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.list_model_versions.html">deepcell_types.utils.list_model_versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deepcell_types.utils.list_baseline_names.html">deepcell_types.utils.list_baseline_names</a></li>
 </ul>
 </div>
 </nav></div>
@@ -424,7 +426,10 @@
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>list[pathlib.Path]</dt><dd><p>Local paths to every file downloaded for this baseline, in the
-order declared in <code class="docutils literal notranslate"><span class="pre">_baseline_registry</span></code>.</p>
+order declared in <code class="docutils literal notranslate"><span class="pre">_baseline_registry</span></code>. Note the asymmetry with
+<a class="reference internal" href="deepcell_types.utils.download_model.html#deepcell_types.utils.download_model" title="deepcell_types.utils.download_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_model()</span></code></a>, which returns a single <code class="docutils literal notranslate"><span class="pre">Path</span></code>: baselines
+return a <em>list</em> because some ship companion files. Call
+<a class="reference internal" href="deepcell_types.utils.list_baseline_names.html#deepcell_types.utils.list_baseline_names" title="deepcell_types.utils.list_baseline_names"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_baseline_names()</span></code></a> for the accepted identifiers.</p>
 </dd>
 </dl>
 </dd>

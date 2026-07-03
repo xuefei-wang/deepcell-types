@@ -233,6 +233,8 @@ visualization.
 ```
 
 ```{code-cell} ipython3
+:tags: [skip-execution]
+
 import napari
 nim = napari.Viewer(show=True)  # show=False for headless runs (screenshots may be blank)
 
@@ -248,7 +250,7 @@ mask_lyr.contour = 3  # Relatively thick borders for static viz
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-cell, skip-execution]
 
 # For static rendering - can safely be ignored if running notebook interactively
 from pathlib import Path
@@ -397,6 +399,8 @@ The advantage of this approach is that individual layers can be toggled to focus
 on a particular cell type during interactive visualization.
 
 ```{code-cell} ipython3
+:tags: [skip-execution]
+
 # Regionprops to extract slices corresponding to each individual cell mask
 props = skimage.measure.regionprops(mask)
 prop_dict = {p.label: p for p in props}
@@ -415,7 +419,7 @@ for k, l in labels_by_celltype.items():
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-cell]
+:tags: [hide-cell, skip-execution]
 
 # For static rendering - can safely be ignored if running notebook interactively
 from pathlib import Path

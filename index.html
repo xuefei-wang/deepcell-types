@@ -372,7 +372,7 @@ See <a class="reference internal" href="site/API-key.html"><span class="doc">Mod
 <h2>TissueNet archive (optional)<a class="headerlink" href="#tissuenet-archive-optional" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">predict()</span></code> does <strong>not</strong> require the TissueNet archive: the marker / cell-type
 registry it needs ships with the package as a small <code class="docutils literal notranslate"><span class="pre">vocab.json</span></code> snapshot, so
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">deepcell-types</span></code> + <code class="docutils literal notranslate"><span class="pre">download_model()</span></code> is enough to run inference.</p>
+the base install above + <code class="docutils literal notranslate"><span class="pre">download_model()</span></code> is enough to run inference.</p>
 <p>The (multi-GB) <code class="docutils literal notranslate"><span class="pre">tissuenet-v*.zarr</span></code> archive is only needed if you want the
 tissue→cell-type mapping or are reproducing the training pipeline. It is
 distributed as a <code class="docutils literal notranslate"><span class="pre">.zip</span></code> that must be extracted before use:</p>
