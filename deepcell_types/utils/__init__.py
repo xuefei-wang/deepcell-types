@@ -25,10 +25,17 @@ _latest = "2026-06-15"
 # (``2026-06-15``): a sampler-trained backbone, frozen, with a residual-MLP
 # cell-type head retrained on the natural class distribution. It loads via
 # stock ``predict.py`` (the resMLP head is auto-detected).
+#
+# md5 tracks the vocab-bundled asset (carries ``ct2idx`` + ``canonical_channels``
+# so ``validate_checkpoint_vocabulary`` can verify ordering). The original
+# ``704616a1cfeb6f4718ffdb8d7ea64d65`` asset predated the guard and raised
+# ``ValueError: ... does not bundle a ct2idx`` on every ``predict()`` call; it
+# was re-packaged with ``scripts/repackage_release_checkpoint.py``. The bundled
+# asset must be uploaded at this same filename before this md5 is served.
 _model_registry = {
     "2026-06-15": (
         "deepcell-types_2026-06-15_resmlp.pt",
-        "704616a1cfeb6f4718ffdb8d7ea64d65",
+        "b819a7e0b177ad5330394eab3c6c7ad8",
     ),
 }
 
