@@ -1,0 +1,6 @@
+﻿deepcell\_types.abstention.compute\_iqr\_fence
+==============================================
+
+.. currentmodule:: deepcell_types.abstention
+
+.. autofunction:: compute_iqr_fence
