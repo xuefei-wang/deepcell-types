@@ -18,14 +18,14 @@ __all__ = [
     "list_baseline_names",
 ]
 
-_latest = "2026-06-23"
+_latest = "2026-06-15"
 
 # Main model checkpoints. Values are ``(asset_filename, md5)``.
 # Two released residual-MLP checkpoints share the current vocabulary (51 cell
 # types, 278 markers) and load via stock ``predict.py`` (the resMLP head is
 # auto-detected):
-#   - ``2026-06-23`` (default): the pretrain -> finetune (SSL) resMLP arm.
-#   - ``2026-06-15``: the from-scratch resMLP (paper Fig-3c headline).
+#   - ``2026-06-15`` (default): the from-scratch resMLP (paper Fig-3c headline).
+#   - ``2026-06-23``: the pretrain -> finetune (SSL) resMLP arm.
 #
 # Each md5 tracks the vocab-bundled asset (carries ``ct2idx`` +
 # ``canonical_channels`` so ``validate_checkpoint_vocabulary`` can verify
@@ -34,13 +34,13 @@ _latest = "2026-06-23"
 # they were re-packaged with ``scripts/repackage_release_checkpoint.py``. Each
 # bundled asset must be uploaded at its filename below before its md5 is served.
 _model_registry = {
-    "2026-06-23": (
-        "deepcell-types_2026-06-23_resmlp_ptft.pt",
-        "402e94c103c5e489a57433cd107009d3",
-    ),
     "2026-06-15": (
         "deepcell-types_2026-06-15_resmlp.pt",
         "b819a7e0b177ad5330394eab3c6c7ad8",
+    ),
+    "2026-06-23": (
+        "deepcell-types_2026-06-23_resmlp_ptft.pt",
+        "402e94c103c5e489a57433cd107009d3",
     ),
 }
 
